@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2000 單字小卷｜防作弊互動拼字測驗</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;background:#f8fafc;color:#1e293b;-webkit-tap-highlight-color:transparent;min-height:100vh;display:flex;flex-direction:column}
+body.exam-lock{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer;border:0}
+button:disabled{opacity:.55;cursor:default}
+header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);border-bottom:1px solid #e2e8f0}
+.hbar{max-width:42rem;margin:0 auto;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.logo{width:2.2rem;height:2.2rem;border-radius:.75rem;background:#4f46e5;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;flex:none}
+.htitle{display:flex;align-items:center;gap:.6rem;min-width:0}
+.htitle h1{font-size:.95rem;margin:0;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htitle p{margin:0;font-size:.7rem;color:#64748b}
+.seatbadge{padding:.1rem .45rem;border-radius:.4rem;background:#4f46e5;color:#fff;font-size:.72rem;font-weight:900;margin-left:.3rem;white-space:nowrap}
+.hbtns{display:flex;gap:.4rem;flex:none}
+.pill{padding:.45rem .65rem;border-radius:.75rem;background:#f1f5f9;color:#334155;font-size:.75rem;font-weight:700;display:inline-flex;align-items:center;gap:.25rem}
+.pill.indigo{background:#eef2ff;color:#4338ca}
+.prog{height:4px;background:#f1f5f9}.prog>div{height:100%;background:#4f46e5;width:0;transition:width .3s}
+main{max-width:42rem;width:100%;margin:0 auto;padding:1rem;flex:1}
+.card{background:#fff;border-radius:1.5rem;padding:1.25rem;box-shadow:0 10px 30px -5px rgba(15,23,42,.08);border:1px solid #f1f5f9;margin-bottom:1rem}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:.72rem;font-weight:700}
+h2{margin:.5rem 0 .3rem;font-size:1.5rem;font-weight:900}
+.muted{color:#64748b;font-size:.85rem}
+.sec{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem;padding:1rem;margin-top:1rem}
+.sechead{display:flex;justify-content:space-between;font-size:.8rem;font-weight:800;color:#334155;margin-bottom:.6rem;gap:.5rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+label{display:block;font-size:.78rem;font-weight:700;color:#475569;margin-bottom:.25rem}
+.req{color:#e11d48}
+input.f{width:100%;font-size:16px;padding:.7rem .8rem;border:2px solid #e2e8f0;border-radius:.8rem;background:#fff;outline:none}
+input.f:focus{border-color:#6366f1}
+input.f.err{border-color:#f43f5e;background:#fff1f2}
+.errmsg{color:#e11d48;font-size:.8rem;font-weight:700;margin-top:.5rem}
+ul.rules{margin:0;padding-left:1.1rem;font-size:.82rem;color:#475569;line-height:1.6}
+.btn{width:100%;padding:.95rem;border-radius:1rem;font-weight:900;font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:.45rem;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:#4f46e5;color:#fff;box-shadow:0 6px 16px -6px rgba(79,70,229,.6)}
+.btn.ghost{background:#eef2ff;color:#4338ca;margin-top:.6rem;font-size:.92rem}
+.btn.rose{background:#e11d48;color:#fff}
+.btn.white{background:#fff;color:#334155;border:2px solid #e2e8f0}
+.qtop{display:flex;justify-content:space-between;align-items:flex-end;gap:.5rem;margin-bottom:.8rem}
+.qnum{font-weight:900;color:#334155}.qnum b{color:#4f46e5;font-size:1.2rem}
+.mbadge{display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .5rem;border-radius:999px;font-size:.7rem;font-weight:800;background:#f1f5f9;color:#475569}
+.mbadge.bad{background:#ffe4e6;color:#be123c}
+.score{text-align:right}.score small{display:block;font-size:.7rem;color:#94a3b8}.score b{font-size:1.1rem;color:#059669}
+.noselect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
+.zh{font-size:1.9rem;font-weight:900;margin:.4rem 0 1rem;line-height:1.3;color:#0f172a}
+.spk{background:#eef2ff;color:#4338ca;border-radius:.9rem;padding:.6rem 1rem;font-weight:800;display:inline-flex;align-items:center;gap:.35rem}
+.ansbox{position:relative;margin-top:1.1rem}
+#answerInput{width:100%;text-align:center;font-size:24px;font-weight:800;letter-spacing:.03em;padding:1rem;border-radius:1rem;border:2px solid #e2e8f0;background:#f8fafc;color:#0f172a;outline:none;-webkit-user-select:text;user-select:text;-webkit-touch-callout:none}
+#answerInput:focus{border-color:#6366f1;background:#fff}
+#answerInput.wrong{border-color:#f43f5e;background:#fff1f2;color:#881337}
+#answerInput.right{border-color:#10b981;background:#ecfdf5;color:#065f46}
+#clearInputBtn{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:#e2e8f0;border-radius:999px;width:2rem;height:2rem;color:#475569}
+.warn{margin-top:.6rem;border-radius:.8rem;background:#e11d48;color:#fff;padding:.6rem .8rem;font-size:.82rem;font-weight:800}
+.row{display:flex;gap:.6rem;margin-top:.7rem}
+.row>*{flex:1}
+.fb{margin-top:1rem;border-radius:1.1rem;padding:1rem;border:1px solid}
+.fb.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.fb.ng{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+.fb.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}
+.fbhead{display:flex;gap:.6rem;align-items:flex-start}
+.fbhead .ic{font-size:1.5rem}.fbhead h3{margin:0;font-size:1.05rem;font-weight:900}.fbhead p{margin:.15rem 0 0;font-size:.82rem;opacity:.9}
+.autobar{height:6px;background:#fecdd3;border-radius:999px;overflow:hidden;margin-top:.7rem}
+.autobar>div{height:100%;background:#e11d48;width:100%}
+.autobar>div.run{animation:shrink 2.2s linear forwards}
+@keyframes shrink{from{width:100%}to{width:0}}
+.hint{background:#fff;border:1px solid #fecdd3;border-radius:.9rem;padding:.8rem;margin-top:.7rem;text-align:center}
+.wlipa{font-size:1rem;color:#be123c;font-family:'Lucida Sans Unicode','Arial Unicode MS','Segoe UI',sans-serif}
+.hintipa{margin-top:.55rem;font-size:1.25rem;color:#334155;font-family:'Lucida Sans Unicode','Arial Unicode MS','Segoe UI',sans-serif}.hintipa b{color:#be123c;letter-spacing:.03em}
+.hint .letters{display:flex;justify-content:center;align-items:center;gap:.6rem;margin-top:.5rem}
+.lbox{width:3rem;height:3rem;border-radius:.8rem;background:#ffe4e6;border:2px solid #fb7185;font:900 1.5rem ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center;color:#881337}
+.ex{background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.06);border-radius:.9rem;padding:.8rem;margin-top:.7rem;color:#1e293b}
+.exhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.4rem;border-bottom:1px solid #f1f5f9;padding-bottom:.4rem;margin-bottom:.4rem}
+.exw{font-size:1.4rem;font-weight:900}.ipa{color:#64748b;font-size:.85rem;margin-left:.4rem}.pos{font-size:.72rem;background:#f1f5f9;color:#475569;border-radius:.3rem;padding:.05rem .4rem;margin-left:.3rem;font-weight:700}
+.exzh{color:#4f46e5;font-weight:800;font-size:.82rem}
+.sen{display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start}
+.sen p{margin:0;font-weight:700;line-height:1.5}
+.sbtn{background:#eef2ff;color:#4338ca;border-radius:.7rem;padding:.4rem .55rem;flex:none}
+.senzh{font-size:.82rem;color:#64748b;margin:.15rem 0 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:1rem}
+.stat{background:#f8fafc;border-radius:.9rem;padding:.7rem;text-align:center}.stat small{font-size:.72rem;color:#64748b}.stat b{display:block;font-size:1.15rem;margin-top:.15rem}
+.big{font-size:3.5rem;font-weight:900;color:#4f46e5;line-height:1}
+.center{text-align:center}
+.okbanner{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:.8rem;padding:.6rem .8rem;color:#065f46;font-weight:800;font-size:.85rem}
+.badbanner{background:#fff1f2;border:1px solid #fecdd3;border-radius:.8rem;padding:.6rem .8rem;color:#9f1239;font-weight:800;font-size:.85rem}
+.logs{max-height:12rem;overflow-y:auto;background:#fff;border:1px solid #fecdd3;border-radius:.8rem;font-size:.78rem;margin-top:.5rem}
+.logs div{padding:.5rem .7rem;border-bottom:1px solid #ffe4e6;display:flex;justify-content:space-between;gap:.5rem}
+.wrongitem{padding:.8rem 0;border-bottom:1px solid #fecdd3}
+.redpen{display:inline-block;margin-top:.35rem;font-size:.75rem;font-weight:800;color:#be123c;background:#ffe4e6;border-radius:.4rem;padding:.1rem .45rem}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center}
+.mbox{background:#fff;width:100%;max-width:42rem;max-height:88vh;border-radius:1.5rem 1.5rem 0 0;display:flex;flex-direction:column}
+@media(min-width:640px){.modal{align-items:center;padding:1rem}.mbox{border-radius:1.5rem}.zh{font-size:2.4rem}}
+.mhead{padding:1rem 1.2rem;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center}
+.mhead h3{margin:0;font-size:1rem;font-weight:900}
+.mbody{padding:1rem 1.2rem;overflow-y:auto}
+.witem{padding:.7rem 0;border-bottom:1px solid #f1f5f9}
+.wnum{display:inline-flex;width:1.5rem;height:1.5rem;border-radius:.5rem;background:#eef2ff;color:#4338ca;font-size:.72rem;font-weight:900;align-items:center;justify-content:center;margin-right:.3rem}
+footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.wave{display:inline-flex;gap:2px;margin-left:.2rem}.wave i{width:3px;height:14px;background:currentColor;border-radius:9px;animation:wv .65s infinite}
+.wave i:nth-child(2){animation-delay:.15s}.wave i:nth-child(3){animation-delay:.3s}
+@keyframes wv{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+.wrongnow{display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .55rem;border-radius:999px;font-size:.75rem;font-weight:900;background:#ffe4e6;color:#be123c;margin-left:.3rem}
+.restartq{background:#fff;border:2px solid #fecdd3;color:#be123c;border-radius:.8rem;padding:.35rem .7rem;font-size:.78rem;font-weight:800}
+.bigword{font-size:1.8rem;font-weight:900;color:#be123c;letter-spacing:.04em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.yours{font-size:.85rem;color:#475569;margin-top:.2rem}.yours s{color:#e11d48}
+.passbadge{display:inline-block;margin-top:.5rem;padding:.35rem 1rem;border-radius:999px;font-weight:900;font-size:1rem}
+.passbadge.ok{background:#d1fae5;color:#047857}.passbadge.ng{background:#ffe4e6;color:#be123c}
+.stats5{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-top:1rem}@media(min-width:520px){.stats5{grid-template-columns:repeat(4,1fr)}}
+.busy{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.45rem .9rem;border-radius:999px;font-size:.8rem;z-index:60}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <div class="htitle">
+      <div class="logo">A</div>
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center"><h1 id="appTitle">2000 單字小卷</h1><span id="headerSeatBadge" class="seatbadge hidden">座號：--</span></div>
+        <p>每題 5 分・第 20 題送分 (+5)</p>
+      </div>
+    </div>
+    <div class="hbtns">
+      <button class="pill" id="speedBtn" type="button" onclick="toggleSpeechRate()">🐢 <span id="speedLabel">1.0x 正常</span></button>
+      <button class="pill indigo" id="wordListBtn" type="button" onclick="openWordListModal()">☰ 單字總表</button>
+    </div>
+  </div>
+  <div class="prog"><div id="progressBar"></div></div>
+</header>
+
+<main>
+  <!-- 1. 考前準備 -->
+  <section id="startView">
+    <div class="card">
+      <span class="tag">十二年國教能力提升系列・熟背 A~Z</span>
+      <h2 id="startTitle">2000 單字小卷 (二段 P.11–15)</h2>
+      <p class="muted">共 <span id="startTotal">19</span> 題拼字測驗 ＋ 第 20 題送分 5 分（滿分 100 分）</p>
+      <div class="sec">
+        <div class="sechead"><span>考生資料登記</span><span class="req">* 座號為必填欄位</span></div>
+        <div class="grid2">
+          <div><label for="seatInput">座號 <span class="req">*</span></label>
+            <input class="f" id="seatInput" type="text" inputmode="numeric" maxlength="10" placeholder="例如：05 或 18" autocomplete="off"></div>
+          <div><label for="nameInput">姓名 <span class="muted">(選填)</span></label>
+            <input class="f" id="nameInput" type="text" maxlength="20" placeholder="可不填" autocomplete="off"></div>
+        </div>
+        <div id="codeWrap" class="hidden" style="margin-top:.7rem"><label for="codeInput">測驗代碼 <span class="req">*</span></label>
+          <input class="f" id="codeInput" type="text" maxlength="20" placeholder="老師公布的代碼" autocomplete="off"></div>
+        <p id="seatErrorMsg" class="errmsg hidden">⚠️ <span id="seatErrorText">請先輸入「座號」再開始答題！</span></p>
+      </div>
+      <div class="sec">
+        <div class="sechead"><span>測驗與防作弊規則</span><span>🛡️ 背景監控已就緒</span></div>
+        <ul class="rules">
+          <li>開始答題後，「單字總表」會自動隱藏，且<b>禁止從剪貼簿貼上、禁止使用鍵盤建議字</b>。</li>
+          <li>作答期間若<b>切換分頁、開啟其他 App、離開畫面或退出全螢幕</b>，系統會記錄次數與秒數；超過 <b id="ruleLeave">3</b> 次整卷會被標記。</li>
+          <li>第 1、2 次答錯提示首尾字母；<b>答錯 3 次</b>自動公布解答並進入下一題。</li>
+          <li>同一座號<b>第一次完整作答</b>為正式成績，之後都算練習。</li>
+        </ul>
+      </div>
+      <div style="margin-top:1rem">
+        <button class="btn primary" id="startQuizBtn" type="button" onclick="startQuiz()">🚀 開始答題</button>
+        <button class="btn ghost" type="button" onclick="openWordListModal()">📖 全部單字複習總表（KK 音標＋🔊）</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 作答中 -->
+  <section id="quizView" class="hidden">
+    <div class="qtop">
+      <div>
+        <span id="modeBadge" class="mbadge bad hidden">錯題重測</span>
+        <div class="qnum">第 <b id="currentQNum">1</b> / <span id="totalQNum">19</span> 題</div>
+        <span id="monitorStatusBadge" class="mbadge">● <span id="monitorStatusText">監控中</span></span><span class="wrongnow">❌ 目前答錯：<span id="wrongNow">0</span> 題</span>
+      </div>
+      <div class="score"><small id="scoreLabelHint">目前得分 (含送分 5)</small><b id="scoreDisplay">5 分</b><div style="margin-top:.35rem"><button type="button" class="restartq" onclick="askRestart()">↺ 重新開始</button></div></div>
+    </div>
+    <div class="card" id="questionCard">
+      <div class="muted noselect">考卷第 <span id="questionNumberTag">1</span> 題・請寫出英文</div>
+      <h2 id="chinesePrompt" class="zh noselect" draggable="false">—</h2>
+      <button id="speakWordBtn" class="spk" type="button" onclick="speakCurrentWord(true)">🔊 聽發音<span id="speakingWave" class="wave hidden"><i></i><i></i><i></i></span></button>
+      <form id="answerForm" onsubmit="handleFormSubmit(event)">
+        <div class="ansbox">
+          <input id="answerInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" enterkeyhint="send" placeholder="請手動輸入英文單字拼音...">
+          <button id="clearInputBtn" type="button" class="hidden" onclick="clearInput()">✕</button>
+        </div>
+        <div id="pasteWarningBanner" class="warn hidden">🚫 <span id="pasteWarnText">已攔截貼上！請自己手動輸入。</span></div>
+        <div id="inputActions" class="row">
+          <button id="submitBtn" type="submit" class="btn primary">送出答案 ↵</button>
+        </div>
+        <div id="giveUpRow" class="row"><button type="button" class="btn white" style="font-size:.85rem;padding:.6rem" onclick="giveUpAndReveal()">放棄並看完整解答</button></div>
+      </form>
+      <div id="feedbackArea" class="fb hidden">
+        <div class="fbhead"><span class="ic" id="feedbackIcon">✅</span><div><h3 id="feedbackTitle"></h3><p id="feedbackSubtitle"></p></div></div>
+        <div id="autoAdvanceBarWrap" class="autobar hidden"><div id="autoAdvanceBar"></div></div>
+        <div id="firstLastHintContainer" class="hint hidden">
+          <span id="attemptsBadge" class="mbadge bad">還剩 2 次機會</span>
+          <div class="letters"><span class="lbox" id="firstLetterBox">a</span><span>⋯</span><span class="lbox" id="lastLetterBox">w</span></div>
+          <div id="hintIpaWrap" class="hintipa hidden">KK 音標：<b id="hintIpa"></b></div>
+        </div>
+        <div id="exampleBox" class="ex hidden">
+          <div class="exhead"><div><span class="exw" id="fbWord"></span><span class="ipa" id="fbPhonetic"></span><span class="pos" id="fbPos"></span></div><span class="exzh" id="fbChinese"></span></div>
+          <div class="sen"><p id="fbSentenceEn"></p><button class="sbtn" type="button" onclick="speakCurrentSentence()" title="朗讀例句">🔊</button></div>
+          <p class="senzh" id="fbSentenceZh"></p>
+        </div>
+        <div class="row"><button id="nextBtn" type="button" class="btn primary hidden" onclick="nextQuestion()"><span id="nextBtnText">下一題</span> →</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 結算 -->
+  <section id="summaryView" class="hidden">
+    <div class="card center">
+      <div style="font-size:2.6rem" id="trophyIcon">🏆</div>
+      <div class="muted" style="font-weight:800">座號：<span id="summarySeat">--</span><span id="summaryNameWrap" class="hidden">・姓名：<span id="summaryName"></span></span>
+        <span id="kindBadge" class="mbadge" style="margin-left:.3rem">正式</span></div>
+      <p class="muted" id="summarySubtitle">已完成 2000 單字小卷</p>
+      <div class="big" id="finalScore">--</div>
+      <div class="tag" id="bonusNote" style="margin-top:.4rem;background:#d1fae5;color:#047857">✨ 已包含第 20 題送分 +5 分</div>
+      <div id="flagBanner" class="badbanner hidden" style="margin-top:.7rem"></div>
+      <div><span id="passBadge" class="passbadge hidden"></span></div>
+      <div class="stats5">
+        <div class="stat"><small>總分</small><b id="statTotal" style="color:#4f46e5">--</b></div>
+        <div class="stat"><small>答對（一次對）</small><b id="statCorrect" style="color:#059669">0 題</b></div>
+        <div class="stat"><small>答錯</small><b id="statWrong" style="color:#e11d48">0 題</b></div>
+        <div class="stat"><small>送分</small><b id="statBonus" style="color:#059669">+5 分</b></div>
+        <div class="stat"><small>及格分數</small><b id="statPass">70 分</b></div>
+        <div class="stat"><small>結果</small><b id="statResult">--</b></div>
+        <div class="stat"><small>作答時間</small><b id="statDuration" style="color:#4f46e5">0 秒</b></div>
+        <div class="stat"><small>計分方式</small><b style="font-size:.85rem">每題 5 分</b></div>
+      </div>
+      <div id="failNote" class="badbanner hidden" style="margin-top:.7rem">未達及格分數，請按「重新開始」再完整考一次。</div>
+      <div id="saveState" class="muted" style="margin-top:.6rem"></div>
+    </div>
+
+    <div class="card" id="antiCheatReportCard">
+      <div class="sechead"><span>🛡️ 防作弊監控報告</span><span id="cheatStatusBadge" class="mbadge">通過</span></div>
+      <div class="stats">
+        <div class="stat"><small>離開次數</small><b id="cheatLeaveCount">0 次</b></div>
+        <div class="stat"><small>離開總秒數</small><b id="cheatLeaveSeconds">0.0 秒</b></div>
+        <div class="stat"><small>貼上攔截</small><b id="cheatPasteCount">0 次</b></div>
+        <div class="stat"><small>鍵盤建議攔截</small><b id="cheatSuggestCount">0 次</b></div>
+        <div class="stat"><small>聽音次數</small><b id="cheatListenCount">0 次</b></div>
+        <div class="stat"><small>可疑題號</small><b id="cheatSuspicious">無</b></div>
+      </div>
+      <div id="cheatCleanBanner" class="okbanner" style="margin-top:.7rem">✅ 作答期間沒有離開畫面或貼上紀錄。</div>
+      <div id="cheatLogsContainer" class="hidden" style="margin-top:.7rem"><b style="font-size:.82rem;color:#9f1239">離開明細</b><div class="logs" id="cheatLogsList"></div></div>
+    </div>
+
+    <div class="card hidden" id="wrongWordsSection" style="background:#fff7f8;border-color:#fecdd3">
+      <div class="sechead"><span style="color:#9f1239">📝 錯題清單（錯的字：紅筆、英文 3 遍）</span></div>
+      <div id="wrongWordsList"></div>
+    </div>
+    <div class="card okbanner hidden" id="perfectBanner">🎉 全部一次答對！太厲害了！</div>
+
+    <button class="btn rose" id="retryWrongBtn" type="button" onclick="startWrongOnlyQuiz()">🎯 只重測錯題 (<span id="retryWrongCount">0</span> 題)</button>
+    <button class="btn white" id="restartBtn" style="margin-top:.6rem" type="button" onclick="restartFullQuiz()">🔁 重新開始（完整重考）</button>
+  </section>
+</main>
+<footer>十二年國教能力提升系列・熟背 A~Z 單字 2000 (P.11–15)</footer>
+
+<div id="wordListModal" class="modal hidden" onclick="if(event.target===this)closeWordListModal()">
+  <div class="mbox">
+    <div class="mhead"><div><h3>全部單字複習總表 (第 1–20 題)</h3><div class="muted" style="font-size:.75rem">依考卷順序・KK 音標（課本版）・點 🔊 聽發音</div></div><button class="pill" type="button" onclick="closeWordListModal()">✕</button></div>
+    <div class="mbody" id="wordListContainer"><div class="muted">載入中…</div></div>
+    <div style="padding:.8rem 1.2rem;display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn white" type="button" onclick="closeWordListModal()">關閉總表</button><button class="btn primary" id="wlStartBtn" type="button" onclick="closeWordListModal();startQuiz()">🚀 開始測驗</button></div>
+  </div>
+</div>
+<div id="restartModal" class="modal hidden" style="align-items:center;padding:1rem">
+  <div class="mbox" style="border-radius:1.5rem;max-width:24rem;padding:1.2rem">
+    <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始嗎？</h3>
+    <p class="muted" style="margin:0 0 1rem">會從第 1 題全新作答。這次作答不算成績，但會在作答紀錄記一筆「中途重開」。</p>
+    <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始</button></div>
+  </div>
+</div>
+<div id="busy" class="busy hidden">處理中…</div>
+
+<script>window.API_URL = 'https://script.google.com/macros/s/AKfycbxJIMaY2G5y8ppeH46Z4xMgMe9pYBBi0qEFG8C2dvubdO8AKzrsv4bCz4g7Wt_2FmCqbw/exec';</script>
+<script type="text/plain" id="mainjs">
+// ===== 後端呼叫 =====
+function api(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (res, rej) {
+    if (window.API_URL) {
+      fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }), redirect: 'follow', credentials: 'omit' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) res(j.result); else rej(new Error((j && j.error) || '伺服器錯誤')); })
+        .catch(rej);
+      return;
+    }
+    google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn].apply(null, args);
+  });
+}
+var BOOT = window.QUIZ_BOOT || {};
+var MAX_ATTEMPTS = BOOT.maxAttempts || 3, LEAVE_LIMIT = BOOT.leaveLimit == null ? 3 : BOOT.leaveLimit;
+var PER = BOOT.perScore || 5, BONUS = BOOT.bonus == null ? 5 : BOOT.bonus;
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+// ===== 狀態 =====
+var token = null, activeQuestions = [], currentIndex = 0, isWrongOnlyMode = false, isQuizActive = false;
+var speechRate = 1.0, preferredVoice = null, studentSeat = '', studentName = '';
+var wrongAttemptsCount = 0, isQuestionResolved = false, autoAdvanceTimer = null, quizStartTime = 0;
+var wrongSet = {}, PASS = BOOT.passScore == null ? 70 : BOOT.passScore;
+var firstTryRight = 0, resolvedCount = 0, lastWrongIds = [], wordCache = {}, currentReveal = null;
+var lastValidInputValue = '', pasteAttemptCount = 0, suggestCount = 0, pasteWarningTimer = null;
+var qStart = 0, keyCount = 0, jumpFlag = false, busy = false, wordList = null;
+var isAway = false, awayStartTime = 0, awayReason = '', awayQuestionNum = 1, totalAwayCount = 0, totalAwayMs = 0, cheatLogs = [];
+
+// ===== 語音 =====
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  var v = speechSynthesis.getVoices(); if (!v.length) return;
+  preferredVoice = v.find(function (x) { return x.lang === 'en-US' && /Samantha|Google US English|Alex/.test(x.name); }) ||
+    v.find(function (x) { return x.lang === 'en-US'; }) || v.find(function (x) { return /^en/.test(x.lang); });
+}
+if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function unlockSpeech() { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {} }
+function speakText(text, rate) {
+  if (!('speechSynthesis' in window) || !text) return;
+  try {
+    speechSynthesis.cancel(); if (speechSynthesis.paused) speechSynthesis.resume();
+    var u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; if (preferredVoice) u.voice = preferredVoice;
+    u.rate = rate != null ? rate : speechRate; u.pitch = 1;
+    var w = $('speakingWave');
+    u.onstart = function () { w.classList.remove('hidden'); };
+    u.onend = u.onerror = function () { w.classList.add('hidden'); };
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function speakCurrentWord(manual) {
+  var q = activeQuestions[currentIndex]; if (!q || !token) return;
+  if (!manual && wordCache[q.id]) { speakText(wordCache[q.id]); return; }
+  api('api_speak', token, q.id, !!manual).then(function (w) { wordCache[q.id] = w; speakText(w); })
+    .catch(function (e) { toast('朗讀失敗：' + (e && e.message || e)); });
+}
+function speakCurrentSentence() { if (currentReveal) speakText(currentReveal.exEn, Math.max(0.8, speechRate)); }
+function toggleSpeechRate() {
+  if (speechRate > 0.85) { speechRate = 0.7; $('speedLabel').textContent = '0.7x 慢速'; }
+  else { speechRate = 1.0; $('speedLabel').textContent = '1.0x 正常'; }
+  if (BOOT.autoSpeak === true && isQuizActive && !isQuestionResolved) speakCurrentWord(false);
+}
+function setWordListButtonVisibility(v) { var b = $('wordListBtn'); b.style.display = v ? '' : 'none'; b.classList.toggle('hidden', !v); }
+function clearAutoAdvanceTimer() { if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; } }
+function toast(t) { var b = $('busy'); b.textContent = t; b.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(function () { b.classList.add('hidden'); }, 2500); }
+function setBusy(on, t) { busy = on; var b = $('busy'); if (on) { b.textContent = t || '處理中…'; b.classList.remove('hidden'); } else b.classList.add('hidden'); $('submitBtn').disabled = on; }
+
+// ===== 離開監控 =====
+function pad(n) { return String(n).padStart(2, '0'); }
+function hhmmss(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function resetAntiCheatRecords() { isAway = false; totalAwayCount = 0; totalAwayMs = 0; cheatLogs = []; pasteAttemptCount = 0; suggestCount = 0; updateLiveMonitorBadge(); }
+function updateLiveMonitorBadge() {
+  var b = $('monitorStatusBadge'), t = $('monitorStatusText');
+  if (!totalAwayCount) { b.className = 'mbadge'; t.textContent = '監控中'; return; }
+  b.className = 'mbadge bad';
+  t.textContent = '離開 ' + totalAwayCount + ' 次 (' + (totalAwayMs / 1000).toFixed(1) + 's)' + (totalAwayCount > LEAVE_LIMIT ? '・已超過上限，整卷將標記' : '');
+}
+function curQNum() { var q = activeQuestions[currentIndex]; return q ? q.id : currentIndex + 1; }
+function startAwayTracking(reason) { if (!isQuizActive || isAway) return; isAway = true; awayStartTime = Date.now(); awayReason = reason; awayQuestionNum = curQNum(); }
+function endAwayTracking() {
+  if (!isAway) return;
+  var ms = Math.max(1, Date.now() - awayStartTime);
+  totalAwayCount++; totalAwayMs += ms;
+  cheatLogs.push({ i: totalAwayCount, time: hhmmss(new Date(awayStartTime)), q: awayQuestionNum, reason: awayReason, sec: (ms / 1000).toFixed(2) });
+  isAway = false; updateLiveMonitorBadge();
+}
+function logInstantLeave(reason) {
+  if (!isQuizActive) return;
+  totalAwayCount++;
+  cheatLogs.push({ i: totalAwayCount, time: hhmmss(new Date()), q: curQNum(), reason: reason, sec: '0.00' });
+  updateLiveMonitorBadge();
+}
+function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+var fsActive = false;
+function requestFs() {
+  var el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!f) return;
+  try { var p = f.call(el); if (p && p.then) p.then(function () { fsActive = true; }).catch(function () {}); else fsActive = true; } catch (e) {}
+}
+function exitFs() { if (!isFs()) return; var f = document.exitFullscreen || document.webkitExitFullscreen; try { fsActive = false; f && f.call(document); } catch (e) {} }
+function setupAntiCheatListeners() {
+  document.addEventListener('visibilitychange', function () { if (!isQuizActive) return; if (document.hidden) startAwayTracking('切換分頁 / 切換其他 App'); else endAwayTracking(); });
+  window.addEventListener('blur', function () { if (isQuizActive && !document.hidden) startAwayTracking('視窗失焦 / 下拉通知欄'); });
+  window.addEventListener('focus', function () { if (isQuizActive && !document.hidden) endAwayTracking(); });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+    document.addEventListener(ev, function () { if (isFs()) fsActive = true; else if (fsActive) { fsActive = false; logInstantLeave('退出全螢幕'); } });
+  });
+  document.addEventListener('contextmenu', function (e) { if (isQuizActive || (e.target && e.target.closest && e.target.closest('.noselect'))) { e.preventDefault(); if (e.target && e.target.id === 'answerInput') triggerPasteBlockedWarning('paste'); } });
+  ['copy', 'cut'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (isQuizActive) e.preventDefault(); }); });
+  ['selectstart', 'dragstart'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (e.target && e.target.id === 'answerInput') return; if (isQuizActive || (e.target.closest && e.target.closest('.noselect'))) e.preventDefault(); }); });
+}
+
+// ===== 防貼上 / 防鍵盤建議 =====
+function triggerPasteBlockedWarning(kind) {
+  if (kind === 'suggest') { suggestCount++; $('pasteWarnText').textContent = '已攔截鍵盤建議字！請一個字母一個字母輸入。'; }
+  else { pasteAttemptCount++; $('pasteWarnText').textContent = '已攔截貼上！請自己手動輸入。'; }
+  var b = $('pasteWarningBanner'); b.classList.remove('hidden', 'shake'); void b.offsetWidth; b.classList.add('shake');
+  clearTimeout(pasteWarningTimer); pasteWarningTimer = setTimeout(function () { b.classList.add('hidden'); }, 3200);
+}
+function setupStrictAntiPasteInput(el) {
+  ['paste', 'drop', 'dragover'].forEach(function (ev) { el.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); if (ev !== 'dragover') triggerPasteBlockedWarning('paste'); }); });
+  el.addEventListener('beforeinput', function (e) {
+    var t = e.inputType || '';
+    if (/^insertFrom(Paste|PasteAsQuotation|Drop|YankSelection)$/.test(t)) { e.preventDefault(); triggerPasteBlockedWarning('paste'); return; }
+    if (t === 'insertReplacementText' || t === 'insertPredictionText') { e.preventDefault(); triggerPasteBlockedWarning('suggest'); return; }
+    if (t === 'insertText' && e.data && e.data.length > 1) { e.preventDefault(); triggerPasteBlockedWarning('suggest'); return; }
+  });
+  el.addEventListener('input', function (e) {
+    if (isQuestionResolved) return;
+    var v = el.value, diff = v.length - lastValidInputValue.length;
+    if (diff >= 2) { el.value = lastValidInputValue; jumpFlag = true; triggerPasteBlockedWarning(/Composition|Replacement/.test(e.inputType || '') ? 'suggest' : 'paste'); return; }
+    keyCount++; lastValidInputValue = v;
+    $('clearInputBtn').classList.toggle('hidden', !v.length);
+  });
+}
+
+// ===== 流程 =====
+function initQuiz() {
+  $('appTitle').textContent = BOOT.title || '2000 單字小卷';
+  $('startTitle').textContent = BOOT.title || $('startTitle').textContent;
+  $('startTotal').textContent = BOOT.total || 19;
+  $('ruleLeave').textContent = LEAVE_LIMIT;
+  if (BOOT.needCode) $('codeWrap').classList.remove('hidden');
+  if (BOOT.open === false) showStartError('測驗目前未開放，請等老師通知。');
+  setWordListButtonVisibility(true);
+  setupAntiCheatListeners();
+  setupStrictAntiPasteInput($('answerInput'));
+  ['seatInput', 'nameInput', 'codeInput'].forEach(function (id) {
+    $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); startQuiz(); } });
+    $(id).addEventListener('input', function () { $('seatErrorMsg').classList.add('hidden'); $('seatInput').classList.remove('err'); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && isQuestionResolved && !$('quizView').classList.contains('hidden') && document.activeElement !== $('answerInput')) { e.preventDefault(); nextQuestion(); }
+  });
+}
+function showStartError(t) { $('seatErrorText').textContent = t; $('seatErrorMsg').classList.remove('hidden'); }
+
+function beginSession(mode, ids) {
+  unlockSpeech();
+  requestFs();
+  setBusy(true, '準備題目中…');
+  $('startQuizBtn').disabled = true;
+  return api('api_start', { seat: studentSeat, name: studentName, code: $('codeInput').value, mode: mode, ids: ids }).then(function (r) {
+    setBusy(false); $('startQuizBtn').disabled = false;
+    if (!r.ok) { exitFs(); showStartView(); showStartError(r.msg); return; }
+    token = r.token; wordCache = {}; wordList = null;
+    activeQuestions = r.questions; isWrongOnlyMode = r.mode === 'wrong';
+    clearAutoAdvanceTimer(); resetAntiCheatRecords();
+    document.body.classList.add('exam-lock');
+    isQuizActive = true; firstTryRight = 0; resolvedCount = 0; wrongSet = {}; updateWrongNow(); quizStartTime = Date.now();
+    var sb = $('headerSeatBadge'); sb.textContent = '座號：' + studentSeat; sb.classList.remove('hidden');
+    $('startView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('quizView').classList.remove('hidden');
+    closeWordListModal(); setWordListButtonVisibility(false);
+    loadQuestion(0);
+  }).catch(function (e) { setBusy(false); $('startQuizBtn').disabled = false; exitFs(); showStartView(); showStartError('連線失敗：' + (e && e.message || e)); });
+}
+function showStartView() { $('quizView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('startView').classList.remove('hidden'); setWordListButtonVisibility(true); }
+function startQuiz() {
+  var seat = $('seatInput').value.trim();
+  if (!seat) { showStartError('請先輸入「座號」再開始答題！'); var s = $('seatInput'); s.classList.add('err', 'shake'); setTimeout(function () { s.classList.remove('shake'); }, 350); s.focus(); return; }
+  if (BOOT.needCode && !$('codeInput').value.trim()) { showStartError('請輸入測驗代碼。'); return; }
+  studentSeat = seat; studentName = $('nameInput').value.trim();
+  beginSession('full', null);
+}
+function updateScoreAndProgress() {
+  var total = activeQuestions.length;
+  $('currentQNum').textContent = currentIndex + 1; $('totalQNum').textContent = total;
+  $('progressBar').style.width = Math.max(5, Math.round(resolvedCount / total * 100)) + '%';
+  if (isWrongOnlyMode) { $('scoreLabelHint').textContent = '錯題複習進度'; $('scoreDisplay').textContent = firstTryRight + ' / ' + total + ' 題'; }
+  else { $('scoreLabelHint').textContent = '目前得分 (含送分 ' + BONUS + ')'; $('scoreDisplay').textContent = (BONUS + firstTryRight * PER) + ' 分'; }
+}
+function loadQuestion(i) {
+  clearAutoAdvanceTimer();
+  currentIndex = i; wrongAttemptsCount = 0; isQuestionResolved = false; lastValidInputValue = ''; currentReveal = null;
+  keyCount = 0; jumpFlag = false; qStart = Date.now();
+  var q = activeQuestions[i];
+  $('modeBadge').classList.toggle('hidden', !isWrongOnlyMode);
+  $('questionNumberTag').textContent = q.id; $('chinesePrompt').textContent = q.zh;
+  ['pasteWarningBanner', 'feedbackArea', 'autoAdvanceBarWrap', 'firstLastHintContainer', 'exampleBox', 'nextBtn'].forEach(function (id) { $(id).classList.add('hidden'); });
+  $('inputActions').classList.remove('hidden'); $('giveUpRow').classList.remove('hidden');
+  var el = $('answerInput'); el.value = ''; el.disabled = false; el.className = ''; el.placeholder = '請手動輸入英文單字拼音...';
+  $('clearInputBtn').classList.add('hidden'); $('submitBtn').textContent = '送出答案 ↵';
+  updateScoreAndProgress();
+  setTimeout(function () { el.focus(); }, 80);
+  if (BOOT.autoSpeak === true) speakCurrentWord(false);
+}
+function markWrong(id) { wrongSet[id] = 1; updateWrongNow(); }
+function updateWrongNow() { $('wrongNow').textContent = Object.keys(wrongSet).length; }
+function askRestart() { if (!isQuizActive || busy) return; $('restartModal').classList.remove('hidden'); }
+function closeRestart() { $('restartModal').classList.add('hidden'); if (isQuizActive && !isQuestionResolved) $('answerInput').focus(); }
+function doRestart() {
+  $('restartModal').classList.add('hidden');
+  clearAutoAdvanceTimer();
+  if (isAway) endAwayTracking();
+  var tok = token, qn = curQNum();
+  var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount };
+  isQuizActive = false;
+  setBusy(true, '重新開始中…');
+  api('api_restart', tok, qn, rep).then(function () { setBusy(false); beginSession('full', null); })
+    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始失敗，請再試一次：' + (e && e.message || e)); });
+}
+function clearInput() { var el = $('answerInput'); el.value = ''; lastValidInputValue = ''; $('clearInputBtn').classList.add('hidden'); el.focus(); }
+
+function handleFormSubmit(ev) {
+  ev.preventDefault();
+  if (isQuestionResolved) { nextQuestion(); return; }
+  if (busy) return;
+  var el = $('answerInput'), raw = el.value.trim();
+  if (!raw) { el.classList.add('shake'); setTimeout(function () { el.classList.remove('shake'); }, 350); el.focus(); return; }
+  var q = activeQuestions[currentIndex], meta = { ms: Date.now() - qStart, keys: keyCount, jump: jumpFlag };
+  setBusy(true, '判分中…');
+  api('api_check', token, q.id, raw, meta).then(function (r) {
+    setBusy(false);
+    if (q !== activeQuestions[currentIndex]) return;
+    keyCount = 0; jumpFlag = false; qStart = Date.now();
+    if (r.dup) { resolve(r.reveal, r.correct ? 'ok' : 'final'); return; }
+    if (r.correct) { if (r.firstTry) firstTryRight++; resolve(r.reveal, r.firstTry ? 'ok' : 'fixed'); }
+    else if (r.final) { markWrong(q.id); resolve(r.reveal, 'final'); }
+    else handleWrongAnswer(r);
+  }).catch(function (e) { setBusy(false); toast('連線失敗，請再按一次送出：' + (e && e.message || e)); });
+}
+function handleWrongAnswer(r) {
+  wrongAttemptsCount = r.attempt; markWrong(activeQuestions[currentIndex].id);
+  var el = $('answerInput'); el.className = 'wrong shake'; setTimeout(function () { el.classList.remove('shake'); }, 350);
+  var rem = r.remaining, f = r.hint.first, l = r.hint.last;
+  $('feedbackArea').className = 'fb ng'; $('feedbackArea').classList.remove('hidden');
+  $('autoAdvanceBarWrap').classList.add('hidden');
+  $('feedbackIcon').textContent = '❌';
+  $('feedbackTitle').textContent = '第 ' + r.attempt + ' 次答錯，還剩 ' + rem + ' 次機會';
+  $('feedbackSubtitle').textContent = '提示：第一個字母「' + f + '」，最後一個字母「' + l + '」' + (r.hint.ipa ? '，KK 音標 ' + r.hint.ipa : '') + '（答錯 ' + MAX_ATTEMPTS + ' 次將自動跳下一題）';
+  $('attemptsBadge').textContent = '還剩 ' + rem + ' 次機會';
+  $('firstLetterBox').textContent = f; $('lastLetterBox').textContent = l;
+  if (r.hint.ipa) { $('hintIpa').textContent = r.hint.ipa; $('hintIpaWrap').classList.remove('hidden'); } else $('hintIpaWrap').classList.add('hidden');
+  $('firstLastHintContainer').classList.remove('hidden'); $('exampleBox').classList.add('hidden'); $('nextBtn').classList.add('hidden');
+  $('submitBtn').textContent = '再次送出答案（剩 ' + rem + ' 次） ↵';
+  el.value = ''; lastValidInputValue = ''; el.placeholder = f + ' ... ' + l; $('clearInputBtn').classList.add('hidden'); el.focus();
+}
+function resolve(rv, kind) {
+  clearAutoAdvanceTimer();
+  isQuestionResolved = true; resolvedCount++; currentReveal = rv; wordCache[activeQuestions[currentIndex].id] = rv.word;
+  var el = $('answerInput'); el.value = rv.word; lastValidInputValue = rv.word; el.disabled = true;
+  el.className = kind === 'ok' || kind === 'fixed' ? 'right' : 'wrong';
+  ['clearInputBtn', 'inputActions', 'giveUpRow', 'firstLastHintContainer', 'autoAdvanceBarWrap'].forEach(function (id) { $(id).classList.add('hidden'); });
+  var fa = $('feedbackArea'); fa.classList.remove('hidden');
+  var isLast = currentIndex === activeQuestions.length - 1;
+  if (kind === 'ok') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = isWrongOnlyMode ? '一次答對！' : '一次答對！＋' + PER + ' 分'; $('feedbackSubtitle').textContent = '拼字完全正確，繼續保持！'; }
+  else if (kind === 'fixed') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = '答對了！訂正成功'; $('feedbackSubtitle').textContent = '本題已列入錯題清單（不計得分），測驗結束可針對錯題加強！'; }
+  else if (kind === 'giveup') { fa.className = 'fb info'; $('feedbackIcon').textContent = '📖'; $('feedbackTitle').textContent = '正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '已加入錯題清單，請記住拼法與例句後進入下一題'; }
+  else { fa.className = 'fb ng'; $('feedbackIcon').textContent = '⏭️'; $('feedbackTitle').textContent = '已答錯 ' + MAX_ATTEMPTS + ' 次，正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = isLast ? '已列入錯題清單，2.2 秒後自動前往結算成績...' : '已列入錯題清單，2.2 秒後自動進入下一題...'; }
+  $('fbWord').textContent = rv.word; $('fbPhonetic').textContent = rv.ipa; $('fbPos').textContent = rv.pos; $('fbChinese').textContent = rv.zh;
+  $('fbSentenceEn').textContent = rv.exEn; $('fbSentenceZh').textContent = rv.exZh; $('exampleBox').classList.remove('hidden');
+  $('nextBtnText').textContent = kind === 'final' ? (isLast ? '立即查看成績' : '立即下一題') : (isLast ? '查看測驗成績' : '下一題');
+  $('nextBtn').classList.remove('hidden');
+  updateScoreAndProgress();
+  if (BOOT.autoSpeak === true) speakText(rv.word);
+  if (kind === 'final') {
+    $('autoAdvanceBarWrap').classList.remove('hidden'); var b = $('autoAdvanceBar'); b.classList.remove('run'); void b.offsetWidth; b.classList.add('run');
+    autoAdvanceTimer = setTimeout(function () { autoAdvanceTimer = null; nextQuestion(); }, 2200);
+  }
+}
+function giveUpAndReveal() {
+  if (busy || isQuestionResolved) return;
+  var q = activeQuestions[currentIndex];
+  setBusy(true);
+  api('api_giveUp', token, q.id).then(function (r) { setBusy(false); if (q === activeQuestions[currentIndex] && !isQuestionResolved) { markWrong(q.id); resolve(r.reveal, 'giveup'); } })
+    .catch(function (e) { setBusy(false); toast('連線失敗：' + (e && e.message || e)); });
+}
+function nextQuestion() {
+  clearAutoAdvanceTimer();
+  if (!isQuestionResolved) return;
+  if (currentIndex < activeQuestions.length - 1) loadQuestion(currentIndex + 1); else showSummary();
+}
+function durLabel(s) { return s < 60 ? s + ' 秒' : Math.floor(s / 60) + ' 分 ' + (s % 60) + ' 秒'; }
+
+function showSummary() {
+  clearAutoAdvanceTimer();
+  if (isAway) endAwayTracking();
+  isQuizActive = false; document.body.classList.remove('exam-lock'); exitFs();
+  setWordListButtonVisibility(true);
+  $('quizView').classList.add('hidden'); $('summaryView').classList.remove('hidden'); $('progressBar').style.width = '100%';
+  $('summarySeat').textContent = studentSeat;
+  if (studentName) { $('summaryName').textContent = studentName; $('summaryNameWrap').classList.remove('hidden'); } else $('summaryNameWrap').classList.add('hidden');
+  var secs = Math.max(1, Math.round((Date.now() - quizStartTime) / 1000));
+  $('statDuration').textContent = durLabel(secs);
+  $('finalScore').textContent = '…'; $('saveState').textContent = '成績上傳中…';
+  $('wrongWordsSection').classList.add('hidden'); $('perfectBanner').classList.add('hidden'); $('retryWrongBtn').classList.add('hidden'); $('restartBtn').classList.add('hidden'); $('failNote').classList.add('hidden'); $('passBadge').classList.add('hidden');
+  renderAntiCheatSummary(null);
+  var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount, logs: cheatLogs };
+  var tok = token;
+  (function send(n) {
+    api('api_finish', tok, rep).then(renderResult).catch(function (e) {
+      if (n < 3) setTimeout(function () { send(n + 1); }, 1500);
+      else { $('saveState').innerHTML = '<span style="color:#e11d48">⚠️ 成績上傳失敗，請舉手告訴老師（' + esc(e && e.message || e) + '）</span>'; $('restartBtn').classList.remove('hidden'); }
+    });
+  })(1);
+}
+function renderResult(r) {
+  $('saveState').textContent = '✅ 成績已上傳（第 ' + r.nth + ' 次作答）';
+  $('finalScore').textContent = r.score;
+  var kb = $('kindBadge'); kb.textContent = r.kind; kb.className = 'mbadge' + (r.kind === '正式' ? '' : ' bad');
+  $('statCorrect').textContent = r.right + ' 題'; $('statWrong').textContent = (r.total - r.right) + ' 題';
+  $('statTotal').textContent = r.mode === 'wrong' ? r.score + '%' : r.score + ' 分';
+  $('statBonus').textContent = r.mode === 'wrong' ? '—' : '+' + r.bonus + ' 分';
+  $('statPass').textContent = r.passScore + ' 分';
+  var pb = $('passBadge');
+  if (r.passed === true) { pb.textContent = '✅ 及格（' + r.score + ' ≥ ' + r.passScore + '）'; pb.className = 'passbadge ok'; $('statResult').textContent = '及格'; $('statResult').style.color = '#047857'; }
+  else if (r.passed === false) { pb.textContent = '❌ 不及格（' + r.score + ' < ' + r.passScore + '）'; pb.className = 'passbadge ng'; $('statResult').textContent = '不及格'; $('statResult').style.color = '#be123c'; $('failNote').classList.remove('hidden'); }
+  else { pb.textContent = '錯題重測完成'; pb.className = 'passbadge ok'; $('statResult').textContent = '複習'; $('statResult').style.color = '#4f46e5'; }
+  pb.classList.remove('hidden');
+  $('restartBtn').classList.remove('hidden');
+  if (r.mode === 'wrong') { $('summarySubtitle').textContent = '已完成錯題加強複習！'; $('bonusNote').textContent = '錯題重測首次答對率 ' + r.score + '%'; }
+  else { $('summarySubtitle').textContent = '已完成 2000 單字小卷 (第 1–' + r.total + ' 題)'; $('bonusNote').textContent = '✨ 已包含第 20 題送分 +' + BONUS + ' 分'; }
+  var fb = $('flagBanner');
+  if (r.flagged) { fb.textContent = '⚠️ 離開畫面超過 ' + r.leaveLimit + ' 次，整卷已標記，老師會檢查。'; fb.classList.remove('hidden'); } else fb.classList.add('hidden');
+  renderAntiCheatSummary(r);
+  lastWrongIds = r.wrong.map(function (w) { return w.id; });
+  if (r.wrong.length) {
+    $('wrongWordsSection').classList.remove('hidden'); $('retryWrongCount').textContent = r.wrong.length; $('trophyIcon').textContent = '📝';
+    if (r.passed !== false) $('retryWrongBtn').classList.remove('hidden');
+    window._wrong = r.wrong;
+    $('wrongWordsList').innerHTML = r.wrong.map(function (w, i) {
+      var yours = (w.answers && w.answers.length) ? w.answers.map(function (a) { return '<s>' + esc(a) + '</s>'; }).join('、') : '';
+      if (w.gaveUp) yours = (yours ? yours + '、' : '') + '（放棄）';
+      return '<div class="wrongitem"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center"><div>' +
+        '<span class="mbadge bad">#' + w.id + '</span> <span style="font-size:.85rem;font-weight:700;color:#334155">' + esc(w.zh) + '</span><span class="pos">' + esc(w.pos) + '</span>' +
+        '<div style="margin-top:.2rem"><span class="muted" style="font-size:.75rem">正確拼字</span><div class="bigword">' + esc(w.word) + ' <span class="ipa" style="font-family:inherit;letter-spacing:0">' + esc(w.ipa) + '</span></div></div>' +
+        '<div class="yours">你的作答：' + (yours || '（未作答）') + '</div></div>' +
+        '<button class="sbtn" type="button" onclick="speakText(window._wrong[' + i + '].word)">🔊 發音</button></div>' +
+        '<div class="sen" style="margin-top:.45rem"><p style="font-size:.9rem">' + esc(w.exEn) + '</p><button class="sbtn" type="button" onclick="speakText(window._wrong[' + i + '].exEn,Math.max(0.8,speechRate))" title="朗讀例句">🔊 例句</button></div>' +
+        '<p class="senzh">' + esc(w.exZh) + '</p><span class="redpen">✍️ 紅筆把「' + esc(w.word) + '」寫 3 遍</span></div>';
+    }).join('');
+  } else { $('perfectBanner').classList.remove('hidden'); $('trophyIcon').textContent = '🏆'; }
+}
+function renderAntiCheatSummary(r) {
+  $('cheatLeaveCount').textContent = totalAwayCount + ' 次'; $('cheatLeaveSeconds').textContent = (totalAwayMs / 1000).toFixed(1) + ' 秒';
+  $('cheatPasteCount').textContent = pasteAttemptCount + ' 次'; $('cheatSuggestCount').textContent = suggestCount + ' 次';
+  $('cheatListenCount').textContent = r ? r.listen + ' 次' : '…';
+  $('cheatSuspicious').textContent = r ? (r.suspicious.length ? r.suspicious.join(', ') : '無') : '…';
+  var bad = totalAwayCount > 0 || pasteAttemptCount > 0 || suggestCount > 0 || (r && (r.suspicious.length || r.flagged));
+  var sb = $('cheatStatusBadge'); sb.textContent = bad ? (r && r.flagged ? '整卷標記' : '有異常') : '通過'; sb.className = 'mbadge' + (bad ? ' bad' : '');
+  $('cheatCleanBanner').classList.toggle('hidden', !!bad);
+  if (cheatLogs.length) {
+    $('cheatLogsContainer').classList.remove('hidden');
+    $('cheatLogsList').innerHTML = cheatLogs.map(function (l) { return '<div><span><b style="color:#be123c">#' + l.i + '</b> ' + l.time + '・第 ' + l.q + ' 題・' + esc(l.reason) + '</span><b style="color:#e11d48;white-space:nowrap">' + l.sec + ' 秒</b></div>'; }).join('');
+  } else $('cheatLogsContainer').classList.add('hidden');
+}
+function startWrongOnlyQuiz() { clearAutoAdvanceTimer(); if (!lastWrongIds.length) { restartFullQuiz(); return; } beginSession('wrong', lastWrongIds.slice()); }
+function restartFullQuiz() { clearAutoAdvanceTimer(); beginSession('full', null); }
+
+// ===== 單字總表（只在作答前／結算後可看）=====
+function renderWordList(list) {
+  window._wl = list;
+  $('wordListContainer').innerHTML = list.map(function (q, i) {
+    return '<div class="witem"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><div><span class="wnum">' + q.id + '</span><b style="font-size:1.1rem">' + esc(q.word) + '</b><span class="ipa wlipa">KK ' + esc(q.ipa) + '</span><span class="pos">' + esc(q.pos) + '</span></div>' +
+      '<button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].word)">🔊 單字</button></div>' +
+      '<div style="font-weight:800;color:#312e81;font-size:.88rem;margin:.2rem 0 0 1.8rem">' + esc(q.zh) + '</div>' +
+      '<div class="sen" style="margin-left:1.8rem;font-size:.8rem"><div><p style="font-weight:600;color:#334155">' + esc(q.exEn) + '</p><p class="senzh" style="margin:0">' + esc(q.exZh) + '</p></div><button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].exEn,Math.max(0.8,speechRate))">🔊</button></div></div>';
+  }).join('') + '<div class="witem okbanner" style="margin-top:.6rem"><span class="wnum" style="background:#059669;color:#fff">20</span>送分題（自動計入 +5 分）・滿分 100 分</div>';
+}
+function openWordListModal() {
+  if (isQuizActive) return;
+  $('wordListModal').classList.remove('hidden'); var sb = $('wlStartBtn'); if (sb) sb.style.display = $('startView').classList.contains('hidden') ? 'none' : '';
+  if (wordList) { renderWordList(wordList); return; }
+  $('wordListContainer').innerHTML = '<div class="muted">載入中…</div>';
+  api('api_wordList', token).then(function (r) {
+    if (!r.ok) { $('wordListContainer').innerHTML = '<div class="muted">' + esc(r.msg) + '</div>'; return; }
+    wordList = r.list; renderWordList(wordList);
+  }).catch(function (e) { $('wordListContainer').innerHTML = '<div class="muted">載入失敗：' + esc(e && e.message || e) + '</div>'; });
+}
+function closeWordListModal() { $('wordListModal').classList.add('hidden'); if (isQuizActive && !isQuestionResolved) $('answerInput').focus(); }
+if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initQuiz); else initQuiz();
+</script>
+<div id="bootMsg" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f8fafc;font:600 1.1rem sans-serif;color:#334155;z-index:9999;text-align:center;padding:1rem">載入測驗中…</div>
+<script>
+(function () {
+  var msg = document.getElementById('bootMsg');
+  function boot(n) {
+    fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_boot', args: [] }), redirect: 'follow', credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error((j && j.error) || '伺服器錯誤');
+        window.QUIZ_BOOT = j.result;
+        if (j.result && j.result.title) document.title = j.result.title;
+        var s = document.createElement('script'); s.text = document.getElementById('mainjs').textContent; document.body.appendChild(s);
+        msg.parentNode.removeChild(msg);
+      })
+      .catch(function (e) {
+        if (n < 2) { setTimeout(function () { boot(n + 1); }, 1200); return; }
+        msg.innerHTML = '連線失敗，請檢查網路後<br><button onclick="location.reload()" style="margin-top:.8rem;padding:.6rem 1.2rem;font-size:1rem;border-radius:.6rem;border:0;background:#4f46e5;color:#fff">重新載入</button>';
+      });
+  }
+  boot(0);
+})();
+</script>
+</body>
+</html>
