@@ -180,7 +180,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div class="qnum">第 <b id="currentQNum">1</b> / <span id="totalQNum">19</span> 題</div>
         <span id="monitorStatusBadge" class="mbadge">● <span id="monitorStatusText">監控中</span></span><span class="wrongnow">❌ 目前答錯：<span id="wrongNow">0</span> 題</span>
       </div>
-      <div class="score"><small id="scoreLabelHint">目前得分 (含送分 5)</small><b id="scoreDisplay">5 分</b><div style="margin-top:.35rem"><button type="button" class="restartq" onclick="askRestart()">↺ 重新開始做題</button></div></div>
+      <div class="score"><small id="scoreLabelHint">目前得分 (含送分 5)</small><b id="scoreDisplay">5 分</b><div style="margin-top:.35rem"><button type="button" class="restartq" onclick="askRestart()">↺ 重新開始</button></div></div>
     </div>
     <div class="card" id="questionCard">
       <div class="muted noselect">考卷第 <span id="questionNumberTag">1</span> 題・請寫出英文</div>
@@ -236,7 +236,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div class="stat"><small>作答時間</small><b id="statDuration" style="color:#4f46e5">0 秒</b></div>
         <div class="stat"><small>計分方式</small><b style="font-size:.85rem">每題 5 分</b></div>
       </div>
-      <div id="failNote" class="badbanner hidden" style="margin-top:.7rem">未達及格分數，請按「重新開始做題」再完整考一次。</div>
+      <div id="failNote" class="badbanner hidden" style="margin-top:.7rem">未達及格分數，請按「重新開始」再完整考一次。</div>
       <div id="saveState" class="muted" style="margin-top:.6rem"></div>
     </div>
 
@@ -261,7 +261,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
     <div class="card okbanner hidden" id="perfectBanner">🎉 全部答對！太厲害了！</div>
 
     <button class="btn rose" id="retryWrongBtn" type="button" onclick="startWrongOnlyQuiz()">🎯 只重測錯題 (<span id="retryWrongCount">0</span> 題)</button>
-    <button class="btn white" id="restartBtn" style="margin-top:.6rem" type="button" onclick="restartFullQuiz()">🔁 重新開始做題</button>
+    <button class="btn white" id="restartBtn" style="margin-top:.6rem" type="button" onclick="restartFullQuiz()">🔁 重新開始（完整重考）</button>
   </section>
 </main>
 <footer>十二年國教能力提升系列・熟背 A~Z 單字 2000 (P.11–15)</footer>
@@ -275,9 +275,9 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 </div>
 <div id="restartModal" class="modal hidden" style="align-items:center;padding:1rem">
   <div class="mbox" style="border-radius:1.5rem;max-width:24rem;padding:1.2rem">
-    <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始做題嗎？</h3>
+    <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始嗎？</h3>
     <p class="muted" style="margin:0 0 1rem">會從第 1 題全新作答。這次作答不算成績，但會在作答紀錄記一筆「中途重開」。</p>
-    <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始做題</button></div>
+    <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始</button></div>
   </div>
 </div>
 <div id="skipModal" class="modal hidden" style="align-items:center;padding:1rem">
@@ -509,9 +509,9 @@ function doRestart() {
   var tok = token, qn = curQNum();
   var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount };
   isQuizActive = false;
-  setBusy(true, '重新開始做題中…');
+  setBusy(true, '重新開始中…');
   api('api_restart', tok, qn, rep).then(function () { setBusy(false); beginSession('full', null); })
-    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始做題失敗，請再試一次：' + (e && e.message || e)); });
+    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始失敗，請再試一次：' + (e && e.message || e)); });
 }
 function clearInput() { var el = $('answerInput'); el.value = ''; lastValidInputValue = ''; $('clearInputBtn').classList.add('hidden'); el.focus(); }
 
