@@ -161,7 +161,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <ul class="rules">
           <li>開始答題後，「單字總表」會自動隱藏，且<b>禁止從剪貼簿貼上、禁止使用鍵盤建議字</b>。</li>
           <li>作答期間若<b>切換分頁、開啟其他 App、離開畫面或退出全螢幕</b>，系統會記錄次數與秒數；超過 <b id="ruleLeave">3</b> 次整卷會被標記。</li>
-          <li>第 1、2 次答錯提示首尾字母；<b>答錯 3 次</b>自動公布解答並進入下一題。</li>
+          <li>每題有 3 次機會：答錯會顯示 KK 音標與首尾字母提示，<b>3 次內答對都計分</b>；<b>答錯 3 次</b>才判定答錯並顯示正確拼字。真的不會可按「這題我不會，做下一題」（算答錯）。</li>
           <li>同一座號<b>第一次完整作答</b>為正式成績，之後都算練習。</li>
         </ul>
       </div>
@@ -180,7 +180,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div class="qnum">第 <b id="currentQNum">1</b> / <span id="totalQNum">19</span> 題</div>
         <span id="monitorStatusBadge" class="mbadge">● <span id="monitorStatusText">監控中</span></span><span class="wrongnow">❌ 目前答錯：<span id="wrongNow">0</span> 題</span>
       </div>
-      <div class="score"><small id="scoreLabelHint">目前得分 (含送分 5)</small><b id="scoreDisplay">5 分</b><div style="margin-top:.35rem"><button type="button" class="restartq" onclick="askRestart()">↺ 重新開始</button></div></div>
+      <div class="score"><small id="scoreLabelHint">目前得分 (含送分 5)</small><b id="scoreDisplay">5 分</b><div style="margin-top:.35rem"><button type="button" class="restartq" onclick="askRestart()">↺ 重新開始做題</button></div></div>
     </div>
     <div class="card" id="questionCard">
       <div class="muted noselect">考卷第 <span id="questionNumberTag">1</span> 題・請寫出英文</div>
@@ -195,7 +195,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div id="inputActions" class="row">
           <button id="submitBtn" type="submit" class="btn primary">送出答案 ↵</button>
         </div>
-        <div id="giveUpRow" class="row"><button type="button" class="btn white" style="font-size:.85rem;padding:.6rem" onclick="giveUpAndReveal()">放棄並看完整解答</button></div>
+        <div id="giveUpRow" class="row"><button type="button" class="btn white" style="font-size:.9rem;padding:.65rem" onclick="askSkip()">🙋 這題我不會，做下一題</button></div>
       </form>
       <div id="feedbackArea" class="fb hidden">
         <div class="fbhead"><span class="ic" id="feedbackIcon">✅</span><div><h3 id="feedbackTitle"></h3><p id="feedbackSubtitle"></p></div></div>
@@ -236,7 +236,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div class="stat"><small>作答時間</small><b id="statDuration" style="color:#4f46e5">0 秒</b></div>
         <div class="stat"><small>計分方式</small><b style="font-size:.85rem">每題 5 分</b></div>
       </div>
-      <div id="failNote" class="badbanner hidden" style="margin-top:.7rem">未達及格分數，請按「重新開始」再完整考一次。</div>
+      <div id="failNote" class="badbanner hidden" style="margin-top:.7rem">未達及格分數，請按「重新開始做題」再完整考一次。</div>
       <div id="saveState" class="muted" style="margin-top:.6rem"></div>
     </div>
 
@@ -258,10 +258,10 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
       <div class="sechead"><span style="color:#9f1239">📝 錯題清單（錯的字：紅筆、英文 3 遍）</span></div>
       <div id="wrongWordsList"></div>
     </div>
-    <div class="card okbanner hidden" id="perfectBanner">🎉 全部一次答對！太厲害了！</div>
+    <div class="card okbanner hidden" id="perfectBanner">🎉 全部答對！太厲害了！</div>
 
     <button class="btn rose" id="retryWrongBtn" type="button" onclick="startWrongOnlyQuiz()">🎯 只重測錯題 (<span id="retryWrongCount">0</span> 題)</button>
-    <button class="btn white" id="restartBtn" style="margin-top:.6rem" type="button" onclick="restartFullQuiz()">🔁 重新開始（完整重考）</button>
+    <button class="btn white" id="restartBtn" style="margin-top:.6rem" type="button" onclick="restartFullQuiz()">🔁 重新開始做題</button>
   </section>
 </main>
 <footer>十二年國教能力提升系列・熟背 A~Z 單字 2000 (P.11–15)</footer>
@@ -275,9 +275,16 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 </div>
 <div id="restartModal" class="modal hidden" style="align-items:center;padding:1rem">
   <div class="mbox" style="border-radius:1.5rem;max-width:24rem;padding:1.2rem">
-    <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始嗎？</h3>
+    <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始做題嗎？</h3>
     <p class="muted" style="margin:0 0 1rem">會從第 1 題全新作答。這次作答不算成績，但會在作答紀錄記一筆「中途重開」。</p>
-    <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始</button></div>
+    <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始做題</button></div>
+  </div>
+</div>
+<div id="skipModal" class="modal hidden" style="align-items:center;padding:1rem">
+  <div class="mbox" style="border-radius:1.5rem;max-width:24rem;padding:1.2rem">
+    <h3 style="margin:0 0 .5rem;font-weight:900">這題不會嗎？</h3>
+    <p class="muted" style="margin:0 0 1rem">這題會算答錯、列入錯題清單，並顯示正確拼字，然後做下一題。</p>
+    <div class="row"><button class="btn white" type="button" onclick="closeSkip()">取消，繼續作答</button><button class="btn rose" type="button" onclick="closeSkip(true)">確定，做下一題</button></div>
   </div>
 </div>
 <div id="busy" class="busy hidden">處理中…</div>
@@ -502,9 +509,9 @@ function doRestart() {
   var tok = token, qn = curQNum();
   var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount };
   isQuizActive = false;
-  setBusy(true, '重新開始中…');
+  setBusy(true, '重新開始做題中…');
   api('api_restart', tok, qn, rep).then(function () { setBusy(false); beginSession('full', null); })
-    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始失敗，請再試一次：' + (e && e.message || e)); });
+    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始做題失敗，請再試一次：' + (e && e.message || e)); });
 }
 function clearInput() { var el = $('answerInput'); el.value = ''; lastValidInputValue = ''; $('clearInputBtn').classList.add('hidden'); el.focus(); }
 
@@ -521,20 +528,20 @@ function handleFormSubmit(ev) {
     if (q !== activeQuestions[currentIndex]) return;
     keyCount = 0; jumpFlag = false; qStart = Date.now();
     if (r.dup) { resolve(r.reveal, r.correct ? 'ok' : 'final'); return; }
-    if (r.correct) { if (r.firstTry) firstTryRight++; resolve(r.reveal, r.firstTry ? 'ok' : 'fixed'); }
+    if (r.correct) { firstTryRight++; resolve(r.reveal, r.attempt > 1 ? 'fixed' : 'ok'); }
     else if (r.final) { markWrong(q.id); resolve(r.reveal, 'final'); }
     else handleWrongAnswer(r);
   }).catch(function (e) { setBusy(false); toast('連線失敗，請再按一次送出：' + (e && e.message || e)); });
 }
 function handleWrongAnswer(r) {
-  wrongAttemptsCount = r.attempt; markWrong(activeQuestions[currentIndex].id);
+  wrongAttemptsCount = r.attempt;
   var el = $('answerInput'); el.className = 'wrong shake'; setTimeout(function () { el.classList.remove('shake'); }, 350);
   var rem = r.remaining, f = r.hint.first, l = r.hint.last;
   $('feedbackArea').className = 'fb ng'; $('feedbackArea').classList.remove('hidden');
   $('autoAdvanceBarWrap').classList.add('hidden');
   $('feedbackIcon').textContent = '❌';
   $('feedbackTitle').textContent = '第 ' + r.attempt + ' 次答錯，還剩 ' + rem + ' 次機會';
-  $('feedbackSubtitle').textContent = '提示：第一個字母「' + f + '」，最後一個字母「' + l + '」' + (r.hint.ipa ? '，KK 音標 ' + r.hint.ipa : '') + '（答錯 ' + MAX_ATTEMPTS + ' 次將自動跳下一題）';
+  $('feedbackSubtitle').textContent = '提示：第一個字母「' + f + '」，最後一個字母「' + l + '」' + (r.hint.ipa ? '，KK 音標 ' + r.hint.ipa : '') + '（答錯 ' + MAX_ATTEMPTS + ' 次才判定答錯）';
   $('attemptsBadge').textContent = '還剩 ' + rem + ' 次機會';
   $('firstLetterBox').textContent = f; $('lastLetterBox').textContent = l;
   if (r.hint.ipa) { $('hintIpa').textContent = r.hint.ipa; $('hintIpaWrap').classList.remove('hidden'); } else $('hintIpaWrap').classList.add('hidden');
@@ -551,20 +558,22 @@ function resolve(rv, kind) {
   var fa = $('feedbackArea'); fa.classList.remove('hidden');
   var isLast = currentIndex === activeQuestions.length - 1;
   if (kind === 'ok') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = isWrongOnlyMode ? '一次答對！' : '一次答對！＋' + PER + ' 分'; $('feedbackSubtitle').textContent = '拼字完全正確，繼續保持！'; }
-  else if (kind === 'fixed') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = '答對了！訂正成功'; $('feedbackSubtitle').textContent = '本題已列入錯題清單（不計得分），測驗結束可針對錯題加強！'; }
-  else if (kind === 'giveup') { fa.className = 'fb info'; $('feedbackIcon').textContent = '📖'; $('feedbackTitle').textContent = '正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '已加入錯題清單，請記住拼法與例句後進入下一題'; }
-  else { fa.className = 'fb ng'; $('feedbackIcon').textContent = '⏭️'; $('feedbackTitle').textContent = '已答錯 ' + MAX_ATTEMPTS + ' 次，正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = isLast ? '已列入錯題清單，2.2 秒後自動前往結算成績...' : '已列入錯題清單，2.2 秒後自動進入下一題...'; }
+  else if (kind === 'fixed') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = isWrongOnlyMode ? '答對了！' : '答對了！＋' + PER + ' 分'; $('feedbackSubtitle').textContent = '在 ' + MAX_ATTEMPTS + ' 次機會內答對，本題計分！'; }
+  else if (kind === 'giveup') { fa.className = 'fb info'; $('feedbackIcon').textContent = '📖'; $('feedbackTitle').textContent = '正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '這題算答錯、已列入錯題清單。記住拼法與例句後，按「下一題」繼續'; }
+  else { fa.className = 'fb ng'; $('feedbackIcon').textContent = '⏭️'; $('feedbackTitle').textContent = '已答錯 ' + MAX_ATTEMPTS + ' 次，正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '這題判定答錯、已列入錯題清單。記住拼法後，按「' + (isLast ? '查看測驗成績' : '下一題') + '」繼續'; }
   $('fbWord').textContent = rv.word; $('fbPhonetic').textContent = rv.ipa; $('fbPos').textContent = rv.pos; $('fbChinese').textContent = rv.zh;
   $('fbSentenceEn').textContent = rv.exEn; $('fbSentenceZh').textContent = rv.exZh; $('exampleBox').classList.remove('hidden');
-  $('nextBtnText').textContent = kind === 'final' ? (isLast ? '立即查看成績' : '立即下一題') : (isLast ? '查看測驗成績' : '下一題');
+  $('nextBtnText').textContent = isLast ? '查看測驗成績' : '下一題';
   $('nextBtn').classList.remove('hidden');
   updateScoreAndProgress();
   if (BOOT.autoSpeak === true) speakText(rv.word);
-  if (kind === 'final') {
+  if (false) {
     $('autoAdvanceBarWrap').classList.remove('hidden'); var b = $('autoAdvanceBar'); b.classList.remove('run'); void b.offsetWidth; b.classList.add('run');
     autoAdvanceTimer = setTimeout(function () { autoAdvanceTimer = null; nextQuestion(); }, 2200);
   }
 }
+function askSkip() { if (!isQuizActive || busy || isQuestionResolved) return; $('skipModal').classList.remove('hidden'); }
+function closeSkip(go) { $('skipModal').classList.add('hidden'); if (go) giveUpAndReveal(); else if (isQuizActive && !isQuestionResolved) $('answerInput').focus(); }
 function giveUpAndReveal() {
   if (busy || isQuestionResolved) return;
   var q = activeQuestions[currentIndex];
@@ -615,7 +624,7 @@ function renderResult(r) {
   else { pb.textContent = '錯題重測完成'; pb.className = 'passbadge ok'; $('statResult').textContent = '複習'; $('statResult').style.color = '#4f46e5'; }
   pb.classList.remove('hidden');
   $('restartBtn').classList.remove('hidden');
-  if (r.mode === 'wrong') { $('summarySubtitle').textContent = '已完成錯題加強複習！'; $('bonusNote').textContent = '錯題重測首次答對率 ' + r.score + '%'; }
+  if (r.mode === 'wrong') { $('summarySubtitle').textContent = '已完成錯題加強複習！'; $('bonusNote').textContent = '錯題重測答對率 ' + r.score + '%'; }
   else { $('summarySubtitle').textContent = '已完成 2000 單字小卷 (第 1–' + r.total + ' 題)'; $('bonusNote').textContent = '✨ 已包含第 20 題送分 +' + BONUS + ' 分'; }
   var fb = $('flagBanner');
   if (r.flagged) { fb.textContent = '⚠️ 離開畫面超過 ' + r.leaveLimit + ' 次，整卷已標記，老師會檢查。'; fb.classList.remove('hidden'); } else fb.classList.add('hidden');
@@ -627,7 +636,7 @@ function renderResult(r) {
     window._wrong = r.wrong;
     $('wrongWordsList').innerHTML = r.wrong.map(function (w, i) {
       var yours = (w.answers && w.answers.length) ? w.answers.map(function (a) { return '<s>' + esc(a) + '</s>'; }).join('、') : '';
-      if (w.gaveUp) yours = (yours ? yours + '、' : '') + '（放棄）';
+      if (w.gaveUp) yours = (yours ? yours + '、' : '') + '（這題我不會）';
       return '<div class="wrongitem"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center"><div>' +
         '<span class="mbadge bad">#' + w.id + '</span> <span style="font-size:.85rem;font-weight:700;color:#334155">' + esc(w.zh) + '</span><span class="pos">' + esc(w.pos) + '</span>' +
         '<div style="margin-top:.2rem"><span class="muted" style="font-size:.75rem">正確拼字</span><div class="bigword">' + esc(w.word) + ' <span class="ipa" style="font-family:inherit;letter-spacing:0">' + esc(w.ipa) + '</span></div></div>' +
