@@ -145,12 +145,11 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
       <h2 id="startTitle">2000 單字小卷 (二段 P.11–15)</h2>
       <p class="muted">共 <span id="startTotal">19</span> 題拼字測驗 ＋ 第 20 題送分 5 分（滿分 100 分）</p>
       <div class="sec">
-        <div class="sechead"><span>考生資料登記</span><span class="req">* 座號為必填欄位</span></div>
-        <div class="grid2">
-          <div><label for="seatInput">座號 <span class="req">*</span></label>
-            <input class="f" id="seatInput" type="text" inputmode="numeric" maxlength="10" placeholder="例如：05 或 18" autocomplete="off"></div>
-          <div><label for="nameInput">姓名 <span class="muted">(選填)</span></label>
-            <input class="f" id="nameInput" type="text" maxlength="20" placeholder="可不填" autocomplete="off"></div>
+        <div class="sechead"><span>考生資料登記</span><span class="req">* 座號為必填（01–13 或 21–38）</span></div>
+        <div>
+          <label for="seatInput">座號 <span class="req">*</span></label>
+          <input class="f" id="seatInput" type="text" inputmode="numeric" maxlength="2" placeholder="例如：03、13、21" autocomplete="off">
+          <p class="muted" style="margin:.35rem 0 0">只填座號，不必填姓名。一位數請補 0，例如 3 請輸入 03。</p>
         </div>
         <div id="codeWrap" class="hidden" style="margin-top:.7rem"><label for="codeInput">測驗代碼 <span class="req">*</span></label>
           <input class="f" id="codeInput" type="text" maxlength="20" placeholder="老師公布的代碼" autocomplete="off"></div>
@@ -219,7 +218,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
   <section id="summaryView" class="hidden">
     <div class="card center">
       <div style="font-size:2.6rem" id="trophyIcon">🏆</div>
-      <div class="muted" style="font-weight:800">座號：<span id="summarySeat">--</span><span id="summaryNameWrap" class="hidden">・姓名：<span id="summaryName"></span></span>
+      <div class="muted" style="font-weight:800">座號：<span id="summarySeat">--</span>
         <span id="kindBadge" class="mbadge" style="margin-left:.3rem">正式</span></div>
       <p class="muted" id="summarySubtitle">已完成 2000 單字小卷</p>
       <div class="big" id="finalScore">--</div>
@@ -309,11 +308,11 @@ var BOOT = window.QUIZ_BOOT || {};
 var MAX_ATTEMPTS = BOOT.maxAttempts || 3, LEAVE_LIMIT = BOOT.leaveLimit == null ? 3 : BOOT.leaveLimit;
 var PER = BOOT.perScore || 5, BONUS = BOOT.bonus == null ? 5 : BOOT.bonus;
 var $ = function (id) { return document.getElementById(id); };
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]; }); }
 
 // ===== 狀態 =====
 var token = null, activeQuestions = [], currentIndex = 0, isWrongOnlyMode = false, isQuizActive = false;
-var speechRate = 1.0, preferredVoice = null, studentSeat = '', studentName = '';
+var speechRate = 1.0, preferredVoice = null, studentSeat = '';
 var wrongAttemptsCount = 0, isQuestionResolved = false, autoAdvanceTimer = null, quizStartTime = 0;
 var wrongSet = {}, PASS = BOOT.passScore == null ? 70 : BOOT.passScore;
 var firstTryRight = 0, resolvedCount = 0, lastWrongIds = [], wordCache = {}, currentReveal = null;
@@ -439,7 +438,8 @@ function initQuiz() {
   setWordListButtonVisibility(true);
   setupAntiCheatListeners();
   setupStrictAntiPasteInput($('answerInput'));
-  ['seatInput', 'nameInput', 'codeInput'].forEach(function (id) {
+  ['seatInput', 'codeInput'].forEach(function (id) {
+    if (!$(id)) return;
     $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); startQuiz(); } });
     $(id).addEventListener('input', function () { $('seatErrorMsg').classList.add('hidden'); $('seatInput').classList.remove('err'); });
   });
@@ -454,7 +454,7 @@ function beginSession(mode, ids) {
   requestFs();
   setBusy(true, '準備題目中…');
   $('startQuizBtn').disabled = true;
-  return api('api_start', { seat: studentSeat, name: studentName, code: $('codeInput').value, mode: mode, ids: ids }).then(function (r) {
+  return api('api_start', { seat: studentSeat, code: $('codeInput').value, mode: mode, ids: ids }).then(function (r) {
     setBusy(false); $('startQuizBtn').disabled = false;
     if (!r.ok) { exitFs(); showStartView(); showStartError(r.msg); return; }
     token = r.token; wordCache = {}; wordList = null;
@@ -469,11 +469,21 @@ function beginSession(mode, ids) {
   }).catch(function (e) { setBusy(false); $('startQuizBtn').disabled = false; exitFs(); showStartView(); showStartError('連線失敗：' + (e && e.message || e)); });
 }
 function showStartView() { $('quizView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('startView').classList.remove('hidden'); setWordListButtonVisibility(true); }
+function seatError(seat) {
+  seat = String(seat == null ? '' : seat).trim();
+  if (!seat) return '請先輸入「座號」再開始答題！';
+  if (/^[1-9]$/.test(seat)) return '座號請輸入兩位數，例如「' + seat + '」請改成「0' + seat + '」';
+  if (!/^\d{2}$/.test(seat)) return '座號必須是兩位數字，而且只能是 01–13 或 21–38';
+  var n = Number(seat);
+  if ((n >= 1 && n <= 13) || (n >= 21 && n <= 38)) return '';
+  return '座號必須是 01–13 或 21–38';
+}
 function startQuiz() {
   var seat = $('seatInput').value.trim();
-  if (!seat) { showStartError('請先輸入「座號」再開始答題！'); var s = $('seatInput'); s.classList.add('err', 'shake'); setTimeout(function () { s.classList.remove('shake'); }, 350); s.focus(); return; }
+  var err = seatError(seat);
+  if (err) { showStartError(err); var s = $('seatInput'); s.classList.add('err', 'shake'); setTimeout(function () { s.classList.remove('shake'); }, 350); s.focus(); return; }
   if (BOOT.needCode && !$('codeInput').value.trim()) { showStartError('請輸入測驗代碼。'); return; }
-  studentSeat = seat; studentName = $('nameInput').value.trim();
+  studentSeat = seat;
   beginSession('full', null);
 }
 function updateScoreAndProgress() {
@@ -552,14 +562,17 @@ function handleWrongAnswer(r) {
 function resolve(rv, kind) {
   clearAutoAdvanceTimer();
   isQuestionResolved = true; resolvedCount++; currentReveal = rv; wordCache[activeQuestions[currentIndex].id] = rv.word;
+  if (kind === 'ok' || kind === 'fixed') {
+    updateScoreAndProgress();
+    nextQuestion();
+    return;
+  }
   var el = $('answerInput'); el.value = rv.word; lastValidInputValue = rv.word; el.disabled = true;
-  el.className = kind === 'ok' || kind === 'fixed' ? 'right' : 'wrong';
+  el.className = 'wrong';
   ['clearInputBtn', 'inputActions', 'giveUpRow', 'firstLastHintContainer', 'autoAdvanceBarWrap'].forEach(function (id) { $(id).classList.add('hidden'); });
   var fa = $('feedbackArea'); fa.classList.remove('hidden');
   var isLast = currentIndex === activeQuestions.length - 1;
-  if (kind === 'ok') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = isWrongOnlyMode ? '一次答對！' : '一次答對！＋' + PER + ' 分'; $('feedbackSubtitle').textContent = '拼字完全正確，繼續保持！'; }
-  else if (kind === 'fixed') { fa.className = 'fb ok'; $('feedbackIcon').textContent = '✅'; $('feedbackTitle').textContent = isWrongOnlyMode ? '答對了！' : '答對了！＋' + PER + ' 分'; $('feedbackSubtitle').textContent = '在 ' + MAX_ATTEMPTS + ' 次機會內答對，本題計分！'; }
-  else if (kind === 'giveup') { fa.className = 'fb info'; $('feedbackIcon').textContent = '📖'; $('feedbackTitle').textContent = '正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '這題算答錯、已列入錯題清單。記住拼法與例句後，按「下一題」繼續'; }
+  if (kind === 'giveup') { fa.className = 'fb info'; $('feedbackIcon').textContent = '📖'; $('feedbackTitle').textContent = '正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '這題算答錯、已列入錯題清單。記住拼法與例句後，按「下一題」繼續'; }
   else { fa.className = 'fb ng'; $('feedbackIcon').textContent = '⏭️'; $('feedbackTitle').textContent = '已答錯 ' + MAX_ATTEMPTS + ' 次，正確拼法為：' + rv.word; $('feedbackSubtitle').textContent = '這題判定答錯、已列入錯題清單。記住拼法後，按「' + (isLast ? '查看測驗成績' : '下一題') + '」繼續'; }
   $('fbWord').textContent = rv.word; $('fbPhonetic').textContent = rv.ipa; $('fbPos').textContent = rv.pos; $('fbChinese').textContent = rv.zh;
   $('fbSentenceEn').textContent = rv.exEn; $('fbSentenceZh').textContent = rv.exZh; $('exampleBox').classList.remove('hidden');
@@ -595,7 +608,6 @@ function showSummary() {
   setWordListButtonVisibility(true);
   $('quizView').classList.add('hidden'); $('summaryView').classList.remove('hidden'); $('progressBar').style.width = '100%';
   $('summarySeat').textContent = studentSeat;
-  if (studentName) { $('summaryName').textContent = studentName; $('summaryNameWrap').classList.remove('hidden'); } else $('summaryNameWrap').classList.add('hidden');
   var secs = Math.max(1, Math.round((Date.now() - quizStartTime) / 1000));
   $('statDuration').textContent = durLabel(secs);
   $('finalScore').textContent = '…'; $('saveState').textContent = '成績上傳中…';
