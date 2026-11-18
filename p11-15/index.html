@@ -159,9 +159,9 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
         <div class="sechead"><span>測驗與防作弊規則</span><span>🛡️ 背景監控已就緒</span></div>
         <ul class="rules">
           <li>開始答題後，「單字總表」會自動隱藏，且<b>禁止從剪貼簿貼上、禁止使用鍵盤建議字</b>。</li>
-          <li>作答期間若<b>切換分頁、開啟其他 App、離開畫面或退出全螢幕</b>，系統會記錄次數與秒數；超過 <b id="ruleLeave">3</b> 次整卷會被標記。</li>
+          <li>作答期間若<b>切換分頁、開啟其他 App、離開畫面或退出全螢幕</b>，系統會記錄次數與秒數；超過 <b id="ruleLeave">3</b> 次會記成「中斷離開」。</li>
           <li>每題有 3 次機會：答錯會顯示 KK 音標與首尾字母提示，<b>3 次內答對都計分</b>；<b>答錯 3 次</b>才判定答錯並顯示正確拼字。真的不會可按「這題我不會，做下一題」（算答錯）。</li>
-          <li>同一座號<b>第一次完整作答</b>為正式成績，之後都算練習。</li>
+          <li>作答紀錄不分練習或正式：完整作答記「完成答題」，中途重新開始、關閉或離開頁面、超過離開上限則記「中斷離開」，並寫下<b>答對題數/已作答題數</b>。</li>
         </ul>
       </div>
       <div style="margin-top:1rem">
@@ -219,7 +219,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
     <div class="card center">
       <div style="font-size:2.6rem" id="trophyIcon">🏆</div>
       <div class="muted" style="font-weight:800">座號：<span id="summarySeat">--</span>
-        <span id="kindBadge" class="mbadge" style="margin-left:.3rem">正式</span></div>
+        <span id="kindBadge" class="mbadge" style="margin-left:.3rem">完成答題</span></div>
       <p class="muted" id="summarySubtitle">已完成 2000 單字小卷</p>
       <div class="big" id="finalScore">--</div>
       <div class="tag" id="bonusNote" style="margin-top:.4rem;background:#d1fae5;color:#047857">✨ 已包含第 20 題送分 +5 分</div>
@@ -275,7 +275,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 <div id="restartModal" class="modal hidden" style="align-items:center;padding:1rem">
   <div class="mbox" style="border-radius:1.5rem;max-width:24rem;padding:1.2rem">
     <h3 style="margin:0 0 .5rem;font-weight:900">確定要重新開始嗎？</h3>
-    <p class="muted" style="margin:0 0 1rem">會從第 1 題全新作答。這次作答不算成績，但會在作答紀錄記一筆「中途重開」。</p>
+    <p class="muted" style="margin:0 0 1rem">會從第 1 題全新作答。這次作答會在紀錄記一筆「中斷離開」（答對題數/已作答題數），分數欄空白。</p>
     <div class="row"><button class="btn white" type="button" onclick="closeRestart()">取消</button><button class="btn rose" type="button" onclick="doRestart()">重新開始</button></div>
   </div>
 </div>
@@ -308,7 +308,7 @@ var BOOT = window.QUIZ_BOOT || {};
 var MAX_ATTEMPTS = BOOT.maxAttempts || 3, LEAVE_LIMIT = BOOT.leaveLimit == null ? 3 : BOOT.leaveLimit;
 var PER = BOOT.perScore || 5, BONUS = BOOT.bonus == null ? 5 : BOOT.bonus;
 var $ = function (id) { return document.getElementById(id); };
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]; }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 // ===== 狀態 =====
 var token = null, activeQuestions = [], currentIndex = 0, isWrongOnlyMode = false, isQuizActive = false;
@@ -319,6 +319,7 @@ var firstTryRight = 0, resolvedCount = 0, lastWrongIds = [], wordCache = {}, cur
 var lastValidInputValue = '', pasteAttemptCount = 0, suggestCount = 0, pasteWarningTimer = null;
 var qStart = 0, keyCount = 0, jumpFlag = false, busy = false, wordList = null;
 var isAway = false, awayStartTime = 0, awayReason = '', awayQuestionNum = 1, totalAwayCount = 0, totalAwayMs = 0, cheatLogs = [];
+var interruptSent = false;
 
 // ===== 語音 =====
 function loadVoices() {
@@ -366,7 +367,7 @@ function updateLiveMonitorBadge() {
   var b = $('monitorStatusBadge'), t = $('monitorStatusText');
   if (!totalAwayCount) { b.className = 'mbadge'; t.textContent = '監控中'; return; }
   b.className = 'mbadge bad';
-  t.textContent = '離開 ' + totalAwayCount + ' 次 (' + (totalAwayMs / 1000).toFixed(1) + 's)' + (totalAwayCount > LEAVE_LIMIT ? '・已超過上限，整卷將標記' : '');
+  t.textContent = '離開 ' + totalAwayCount + ' 次 (' + (totalAwayMs / 1000).toFixed(1) + 's)' + (totalAwayCount > LEAVE_LIMIT ? '・已超過上限，將記成中斷離開' : '');
 }
 function curQNum() { var q = activeQuestions[currentIndex]; return q ? q.id : currentIndex + 1; }
 function startAwayTracking(reason) { if (!isQuizActive || isAway) return; isAway = true; awayStartTime = Date.now(); awayReason = reason; awayQuestionNum = curQNum(); }
@@ -376,6 +377,7 @@ function endAwayTracking() {
   totalAwayCount++; totalAwayMs += ms;
   cheatLogs.push({ i: totalAwayCount, time: hhmmss(new Date(awayStartTime)), q: awayQuestionNum, reason: awayReason, sec: (ms / 1000).toFixed(2) });
   isAway = false; updateLiveMonitorBadge();
+  if (isQuizActive && !interruptSent && totalAwayCount > LEAVE_LIMIT) reportInterrupt('超過離開上限', false);
 }
 function logInstantLeave(reason) {
   if (!isQuizActive) return;
@@ -391,8 +393,52 @@ function requestFs() {
   try { var p = f.call(el); if (p && p.then) p.then(function () { fsActive = true; }).catch(function () {}); else fsActive = true; } catch (e) {}
 }
 function exitFs() { if (!isFs()) return; var f = document.exitFullscreen || document.webkitExitFullscreen; try { fsActive = false; f && f.call(document); } catch (e) {} }
+function interruptPayload(reason) {
+  return JSON.stringify({ fn: 'api_leave', args: [token, curQNum(), {
+    leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount, reason: reason
+  }] });
+}
+function reportInterrupt(reason, useBeacon) {
+  if (!isQuizActive || interruptSent || !token) return false;
+  interruptSent = true;
+  if (isAway) endAwayTracking();
+  isQuizActive = false;
+  var payload = interruptPayload(reason);
+  var url = window.API_URL;
+  var sent = false;
+  if (url) {
+    try {
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, keepalive: true, credentials: 'omit', redirect: 'follow' });
+      sent = true;
+    } catch (e) { sent = false; }
+  }
+  if (!sent && useBeacon && url && navigator.sendBeacon) {
+    try { sent = navigator.sendBeacon(url, new Blob([payload], { type: 'text/plain;charset=UTF-8' })); } catch (e) { sent = false; }
+  }
+  if (!sent && typeof google !== 'undefined' && google.script && google.script.run) {
+    try { google.script.run.api_leave(token, curQNum(), { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount, reason: reason }); sent = true; } catch (e) {}
+  }
+  return sent;
+}
 function setupAntiCheatListeners() {
-  document.addEventListener('visibilitychange', function () { if (!isQuizActive) return; if (document.hidden) startAwayTracking('切換分頁 / 切換其他 App'); else endAwayTracking(); });
+  document.addEventListener('visibilitychange', function () {
+    if (!isQuizActive) return;
+    if (document.hidden) {
+      startAwayTracking('切換分頁 / 切換其他 App');
+      if (totalAwayCount + (isAway ? 1 : 0) > LEAVE_LIMIT) reportInterrupt('超過離開上限', true);
+    } else endAwayTracking();
+  });
+  window.addEventListener('pagehide', function (e) {
+    if (!isQuizActive) return;
+    if (e && e.persisted) return;
+    if (isAway) endAwayTracking();
+    reportInterrupt('關閉或離開頁面', true);
+  });
+  window.addEventListener('beforeunload', function () {
+    if (!isQuizActive) return;
+    if (isAway) endAwayTracking();
+    reportInterrupt('關閉或離開頁面', true);
+  });
   window.addEventListener('blur', function () { if (isQuizActive && !document.hidden) startAwayTracking('視窗失焦 / 下拉通知欄'); });
   window.addEventListener('focus', function () { if (isQuizActive && !document.hidden) endAwayTracking(); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
@@ -461,7 +507,7 @@ function beginSession(mode, ids) {
     activeQuestions = r.questions; isWrongOnlyMode = r.mode === 'wrong';
     clearAutoAdvanceTimer(); resetAntiCheatRecords();
     document.body.classList.add('exam-lock');
-    isQuizActive = true; firstTryRight = 0; resolvedCount = 0; wrongSet = {}; updateWrongNow(); quizStartTime = Date.now();
+    isQuizActive = true; interruptSent = false; firstTryRight = 0; resolvedCount = 0; wrongSet = {}; updateWrongNow(); quizStartTime = Date.now();
     var sb = $('headerSeatBadge'); sb.textContent = '座號：' + studentSeat; sb.classList.remove('hidden');
     $('startView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('quizView').classList.remove('hidden');
     closeWordListModal(); setWordListButtonVisibility(false);
@@ -517,11 +563,12 @@ function doRestart() {
   clearAutoAdvanceTimer();
   if (isAway) endAwayTracking();
   var tok = token, qn = curQNum();
-  var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount };
+  var rep = { leaveCount: totalAwayCount, leaveMs: totalAwayMs, paste: pasteAttemptCount, suggest: suggestCount, reason: '重新開始' };
+  interruptSent = true;
   isQuizActive = false;
   setBusy(true, '重新開始中…');
   api('api_restart', tok, qn, rep).then(function () { setBusy(false); beginSession('full', null); })
-    .catch(function (e) { setBusy(false); isQuizActive = true; toast('重新開始失敗，請再試一次：' + (e && e.message || e)); });
+    .catch(function (e) { setBusy(false); interruptSent = false; isQuizActive = true; toast('重新開始失敗，請再試一次：' + (e && e.message || e)); });
 }
 function clearInput() { var el = $('answerInput'); el.value = ''; lastValidInputValue = ''; $('clearInputBtn').classList.add('hidden'); el.focus(); }
 
@@ -625,8 +672,8 @@ function showSummary() {
 function renderResult(r) {
   $('saveState').textContent = '✅ 成績已上傳（第 ' + r.nth + ' 次作答）';
   $('finalScore').textContent = r.score;
-  var kb = $('kindBadge'); kb.textContent = r.kind; kb.className = 'mbadge' + (r.kind === '正式' ? '' : ' bad');
-  $('statCorrect').textContent = r.right + ' 題'; $('statWrong').textContent = (r.total - r.right) + ' 題';
+  var kb = $('kindBadge'); kb.textContent = r.kind || '完成答題'; kb.className = 'mbadge' + (r.kind === '中斷離開' ? ' bad' : '');
+  $('statCorrect').textContent = r.right + ' / ' + r.total + ' 題'; $('statWrong').textContent = (r.total - r.right) + ' 題';
   $('statTotal').textContent = r.mode === 'wrong' ? r.score + '%' : r.score + ' 分';
   $('statBonus').textContent = r.mode === 'wrong' ? '—' : '+' + r.bonus + ' 分';
   $('statPass').textContent = r.passScore + ' 分';
