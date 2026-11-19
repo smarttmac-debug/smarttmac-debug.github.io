@@ -125,6 +125,11 @@ input.seat.err{border-color:var(--bad);background:var(--badbg)}
 <main>
   <section id="review">
     <div class="card">
+      <div class="seatbox" style="margin-top:0">
+        <label for="seatInput">座號 <span class="req">*</span></label>
+        <input class="seat" id="seatInput" type="text" inputmode="numeric" maxlength="2" placeholder="例如：03、13、21" autocomplete="off">
+        <p id="seatErrorMsg" class="errmsg hidden"></p>
+      </div>
       <p style="margin:0 0 1rem;color:var(--muted)">先看總表複習，再按下方按鈕開始測驗。測驗時會圈出地圖上的那一格，請選出正確名稱。</p>
       <section class="rev-sec"><h2>盆地</h2><ul class="rev-list">
 <li><span class="sym">ㄅ</span><span class="kind">盆地</span><span class="ans">臺北盆地</span></li>
@@ -154,11 +159,6 @@ input.seat.err{border-color:var(--bad);background:var(--badbg)}
 <li><span class="sym">丙</span><span class="kind">山脈</span><span class="ans">阿里山山脈</span></li>
 <li><span class="sym">丁</span><span class="kind">山脈</span><span class="ans">玉山山脈</span></li>
 </ul></section>
-      <div class="seatbox">
-        <label for="seatInput">座號 <span class="req">*</span></label>
-        <input class="seat" id="seatInput" type="text" inputmode="numeric" maxlength="2" placeholder="例如：03、13、21" autocomplete="off">
-        <p id="seatErrorMsg" class="errmsg hidden"></p>
-      </div>
       <button class="btn" id="btnStart">開始測驗</button>
     </div>
   </section>
