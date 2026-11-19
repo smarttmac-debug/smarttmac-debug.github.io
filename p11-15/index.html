@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>2000 單字小卷｜防作弊互動拼字測驗</title>
+<!-- v9 ranges: P.11-15 ③ + P.16-20 ④ -->
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -117,6 +118,11 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 .passbadge.ok{background:#d1fae5;color:#047857}.passbadge.ng{background:#ffe4e6;color:#be123c}
 .stats5{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-top:1rem}@media(min-width:520px){.stats5{grid-template-columns:repeat(4,1fr)}}
 .busy{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.45rem .9rem;border-radius:999px;font-size:.8rem;z-index:60}
+
+.rtabs{display:flex;gap:.4rem;max-width:42rem;margin:0 auto;padding:0 1rem .55rem}
+.rtab{flex:1;padding:.55rem .4rem;border-radius:.8rem;background:#f1f5f9;color:#475569;font-size:.85rem;font-weight:800}
+.rtab.on{background:#4f46e5;color:#fff;box-shadow:0 4px 12px -4px rgba(79,70,229,.55)}
+.rtab:disabled{opacity:.55}
 </style>
 </head>
 <body>
@@ -126,7 +132,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
       <div class="logo">A</div>
       <div style="min-width:0">
         <div style="display:flex;align-items:center"><h1 id="appTitle">2000 單字小卷</h1><span id="headerSeatBadge" class="seatbadge hidden">座號：--</span></div>
-        <p>每題 5 分・第 20 題送分 (+5)</p>
+        <p id="headerSub">每題 5 分・20 題滿分 100 分</p>
       </div>
     </div>
     <div class="hbtns">
@@ -135,6 +141,10 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
     </div>
   </div>
   <div class="prog"><div id="progressBar"></div></div>
+  <div id="rangeTabs" class="rtabs" role="tablist" aria-label="單元範圍">
+    <button type="button" class="rtab" data-range="3" id="tabRange3" onclick="selectRange('3')">P.11–15 ③</button>
+    <button type="button" class="rtab on" data-range="4" id="tabRange4" onclick="selectRange('4')">P.16–20 ④</button>
+  </div>
 </header>
 
 <main>
@@ -142,8 +152,8 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
   <section id="startView">
     <div class="card">
       <span class="tag">十二年國教能力提升系列・熟背 A~Z</span>
-      <h2 id="startTitle">2000 單字小卷 (二段 P.11–15)</h2>
-      <p class="muted">共 <span id="startTotal">19</span> 題拼字測驗 ＋ 第 20 題送分 5 分（滿分 100 分）</p>
+      <h2 id="startTitle">2000 單字小卷 (二段 P.16–20)</h2>
+      <p class="muted" id="startSub">共 <span id="startTotal">20</span> 題拼字測驗（每題 5 分，滿分 100 分）</p>
       <div class="sec">
         <div class="sechead"><span>考生資料登記</span><span class="req">* 座號為必填（01–13 或 21–38）</span></div>
         <div>
@@ -267,7 +277,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 
 <div id="wordListModal" class="modal hidden" onclick="if(event.target===this)closeWordListModal()">
   <div class="mbox">
-    <div class="mhead"><div><h3>全部單字複習總表 (第 1–20 題)</h3><div class="muted" style="font-size:.75rem">依考卷順序・KK 音標（課本版）・點 🔊 聽發音</div></div><button class="pill" type="button" onclick="closeWordListModal()">✕</button></div>
+    <div class="mhead"><div><h3 id="wordListTitle">全部單字複習總表 (P.16–20 ④)</h3><div class="muted" style="font-size:.75rem">依考卷順序・KK 音標（課本版）・點 🔊 聽發音</div></div><button class="pill" type="button" onclick="closeWordListModal()">✕</button></div>
     <div class="mbody" id="wordListContainer"><div class="muted">載入中…</div></div>
     <div style="padding:.8rem 1.2rem;display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn white" type="button" onclick="closeWordListModal()">關閉總表</button><button class="btn primary" id="wlStartBtn" type="button" onclick="closeWordListModal();startQuiz()">🚀 開始測驗</button></div>
   </div>
@@ -306,7 +316,8 @@ function api(fn) {
 }
 var BOOT = window.QUIZ_BOOT || {};
 var MAX_ATTEMPTS = BOOT.maxAttempts || 3, LEAVE_LIMIT = BOOT.leaveLimit == null ? 3 : BOOT.leaveLimit;
-var PER = BOOT.perScore || 5, BONUS = BOOT.bonus == null ? 5 : BOOT.bonus;
+var PER = BOOT.perScore || 5, BONUS = BOOT.bonus == null ? 0 : BOOT.bonus;
+var selectedRange = BOOT.defaultRange || '4';
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
@@ -474,10 +485,71 @@ function setupStrictAntiPasteInput(el) {
 }
 
 // ===== 流程 =====
+
+function rangeList() { return (BOOT.ranges && BOOT.ranges.length) ? BOOT.ranges : [
+  { id: '3', label: 'P.11–15 ③', title: '2000 單字小卷 (二段 P.11–15)', total: 19, perScore: 5, bonus: 5 },
+  { id: '4', label: 'P.16–20 ④', title: '2000 單字小卷 (二段 P.16–20)', total: 20, perScore: 5, bonus: 0 }
+]; }
+function currentRange() {
+  var id = selectedRange || BOOT.defaultRange || '4', list = rangeList();
+  for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return list[i];
+  return list[list.length - 1] || { id: '4', label: 'P.16–20 ④', title: BOOT.title, total: BOOT.total || 20, perScore: PER, bonus: BONUS };
+}
+function applyRangeUI() {
+  var r = currentRange();
+  PER = r.perScore || 5; BONUS = r.bonus == null ? 0 : r.bonus;
+  if ($('appTitle')) $('appTitle').textContent = '2000 單字小卷';
+  if ($('startTitle')) $('startTitle').textContent = r.title || ('2000 單字小卷 (' + r.label + ')');
+  if ($('startTotal')) $('startTotal').textContent = r.total;
+  if ($('startSub')) {
+    $('startSub').innerHTML = BONUS > 0
+      ? ('共 <span id="startTotal">' + r.total + '</span> 題拼字測驗 ＋ 第 20 題送分 ' + BONUS + ' 分（滿分 100 分）')
+      : ('共 <span id="startTotal">' + r.total + '</span> 題拼字測驗（每題 5 分，滿分 100 分）');
+  }
+  if ($('headerSub')) {
+    $('headerSub').textContent = BONUS > 0
+      ? ('每題 ' + PER + ' 分・第 20 題送分 (+' + BONUS + ')')
+      : ('每題 ' + PER + ' 分・' + r.total + ' 題滿分 100 分');
+  }
+  if ($('wordListTitle')) $('wordListTitle').textContent = '全部單字複習總表 (' + r.label + ')';
+  document.querySelectorAll('.rtab').forEach(function (b) {
+    b.classList.toggle('on', String(b.getAttribute('data-range')) === String(r.id));
+  });
+  if ($('scoreLabelHint') && !isQuizActive) {
+    if (BONUS > 0) { $('scoreLabelHint').textContent = '目前得分 (含送分 ' + BONUS + ')'; if ($('scoreDisplay')) $('scoreDisplay').textContent = BONUS + ' 分'; }
+    else { $('scoreLabelHint').textContent = '目前得分'; if ($('scoreDisplay')) $('scoreDisplay').textContent = '0 分'; }
+  }
+}
+function setRangeTabsVisible(v) {
+  var bar = $('rangeTabs'); if (bar) bar.classList.toggle('hidden', !v);
+}
+function selectRange(id) {
+  if (isQuizActive) return;
+  var list = rangeList(), ok = false;
+  for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) ok = true;
+  if (!ok) return;
+  if (String(selectedRange) === String(id)) {
+    if ($('summaryView') && !$('summaryView').classList.contains('hidden')) showStartView();
+    applyRangeUI();
+    return;
+  }
+  selectedRange = String(id);
+  wordList = null;
+  applyRangeUI();
+  if ($('summaryView') && !$('summaryView').classList.contains('hidden')) showStartView();
+}
+
 function initQuiz() {
-  $('appTitle').textContent = BOOT.title || '2000 單字小卷';
-  $('startTitle').textContent = BOOT.title || $('startTitle').textContent;
-  $('startTotal').textContent = BOOT.total || 19;
+  selectedRange = BOOT.defaultRange || '4';
+  if (BOOT.ranges && BOOT.ranges.length) {
+    var seen = {};
+    BOOT.ranges.forEach(function (r) { seen[r.id] = true; });
+    document.querySelectorAll('.rtab').forEach(function (b) {
+      if (!seen[b.getAttribute('data-range')]) b.classList.add('hidden');
+    });
+  }
+  applyRangeUI();
+  setRangeTabsVisible(true);
   $('ruleLeave').textContent = LEAVE_LIMIT;
   if (BOOT.needCode) $('codeWrap').classList.remove('hidden');
   if (BOOT.open === false) showStartError('測驗目前未開放，請等老師通知。');
@@ -500,21 +572,26 @@ function beginSession(mode, ids) {
   requestFs();
   setBusy(true, '準備題目中…');
   $('startQuizBtn').disabled = true;
-  return api('api_start', { seat: studentSeat, code: $('codeInput').value, mode: mode, ids: ids }).then(function (r) {
+  return api('api_start', { seat: studentSeat, code: $('codeInput').value, mode: mode, ids: ids, range: selectedRange }).then(function (r) {
     setBusy(false); $('startQuizBtn').disabled = false;
     if (!r.ok) { exitFs(); showStartView(); showStartError(r.msg); return; }
     token = r.token; wordCache = {}; wordList = null;
     activeQuestions = r.questions; isWrongOnlyMode = r.mode === 'wrong';
+    if (r.range) selectedRange = String(r.range);
+    if (r.perScore) PER = r.perScore;
+    if (r.bonus != null) BONUS = r.bonus;
+    applyRangeUI();
     clearAutoAdvanceTimer(); resetAntiCheatRecords();
     document.body.classList.add('exam-lock');
     isQuizActive = true; interruptSent = false; firstTryRight = 0; resolvedCount = 0; wrongSet = {}; updateWrongNow(); quizStartTime = Date.now();
+    setRangeTabsVisible(false);
     var sb = $('headerSeatBadge'); sb.textContent = '座號：' + studentSeat; sb.classList.remove('hidden');
     $('startView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('quizView').classList.remove('hidden');
     closeWordListModal(); setWordListButtonVisibility(false);
     loadQuestion(0);
   }).catch(function (e) { setBusy(false); $('startQuizBtn').disabled = false; exitFs(); showStartView(); showStartError('連線失敗：' + (e && e.message || e)); });
 }
-function showStartView() { $('quizView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('startView').classList.remove('hidden'); setWordListButtonVisibility(true); }
+function showStartView() { $('quizView').classList.add('hidden'); $('summaryView').classList.add('hidden'); $('startView').classList.remove('hidden'); setWordListButtonVisibility(true); setRangeTabsVisible(true); applyRangeUI(); }
 function seatError(seat) {
   seat = String(seat == null ? '' : seat).trim();
   if (!seat) return '請先輸入「座號」再開始答題！';
@@ -537,7 +614,7 @@ function updateScoreAndProgress() {
   $('currentQNum').textContent = currentIndex + 1; $('totalQNum').textContent = total;
   $('progressBar').style.width = Math.max(5, Math.round(resolvedCount / total * 100)) + '%';
   if (isWrongOnlyMode) { $('scoreLabelHint').textContent = '錯題複習進度'; $('scoreDisplay').textContent = firstTryRight + ' / ' + total + ' 題'; }
-  else { $('scoreLabelHint').textContent = '目前得分 (含送分 ' + BONUS + ')'; $('scoreDisplay').textContent = (BONUS + firstTryRight * PER) + ' 分'; }
+  else { $('scoreLabelHint').textContent = BONUS > 0 ? ('目前得分 (含送分 ' + BONUS + ')') : '目前得分'; $('scoreDisplay').textContent = (BONUS + firstTryRight * PER) + ' 分'; }
 }
 function loadQuestion(i) {
   clearAutoAdvanceTimer();
@@ -652,7 +729,7 @@ function showSummary() {
   clearAutoAdvanceTimer();
   if (isAway) endAwayTracking();
   isQuizActive = false; document.body.classList.remove('exam-lock'); exitFs();
-  setWordListButtonVisibility(true);
+  setWordListButtonVisibility(true); setRangeTabsVisible(true);
   $('quizView').classList.add('hidden'); $('summaryView').classList.remove('hidden'); $('progressBar').style.width = '100%';
   $('summarySeat').textContent = studentSeat;
   var secs = Math.max(1, Math.round((Date.now() - quizStartTime) / 1000));
@@ -683,8 +760,13 @@ function renderResult(r) {
   else { pb.textContent = '錯題重測完成'; pb.className = 'passbadge ok'; $('statResult').textContent = '複習'; $('statResult').style.color = '#4f46e5'; }
   pb.classList.remove('hidden');
   $('restartBtn').classList.remove('hidden');
-  if (r.mode === 'wrong') { $('summarySubtitle').textContent = '已完成錯題加強複習！'; $('bonusNote').textContent = '錯題重測答對率 ' + r.score + '%'; }
-  else { $('summarySubtitle').textContent = '已完成 2000 單字小卷 (第 1–' + r.total + ' 題)'; $('bonusNote').textContent = '✨ 已包含第 20 題送分 +' + BONUS + ' 分'; }
+  if (r.mode === 'wrong') { $('summarySubtitle').textContent = '已完成錯題加強複習！'; $('bonusNote').textContent = '錯題重測答對率 ' + r.score + '%'; $('bonusNote').style.display = ''; }
+  else {
+    var lab = r.label || currentRange().label;
+    $('summarySubtitle').textContent = '已完成 2000 單字小卷（' + lab + '，第 1–' + r.total + ' 題）';
+    if ((r.bonus != null ? r.bonus : BONUS) > 0) { $('bonusNote').textContent = '✨ 已包含第 20 題送分 +' + (r.bonus != null ? r.bonus : BONUS) + ' 分'; $('bonusNote').style.display = ''; }
+    else { $('bonusNote').textContent = lab + '：每題 5 分，滿分 100 分（無送分）'; $('bonusNote').style.display = ''; }
+  }
   var fb = $('flagBanner');
   if (r.flagged) { fb.textContent = '⚠️ 離開畫面超過 ' + r.leaveLimit + ' 次，整卷已標記，老師會檢查。'; fb.classList.remove('hidden'); } else fb.classList.add('hidden');
   renderAntiCheatSummary(r);
@@ -730,14 +812,14 @@ function renderWordList(list) {
       '<button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].word)">🔊 單字</button></div>' +
       '<div style="font-weight:800;color:#312e81;font-size:.88rem;margin:.2rem 0 0 1.8rem">' + esc(q.zh) + '</div>' +
       '<div class="sen" style="margin-left:1.8rem;font-size:.8rem"><div><p style="font-weight:600;color:#334155">' + esc(q.exEn) + '</p><p class="senzh" style="margin:0">' + esc(q.exZh) + '</p></div><button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].exEn,Math.max(0.8,speechRate))">🔊</button></div></div>';
-  }).join('') + '<div class="witem okbanner" style="margin-top:.6rem"><span class="wnum" style="background:#059669;color:#fff">20</span>送分題（自動計入 +5 分）・滿分 100 分</div>';
+  }).join('') + (BONUS > 0 ? '<div class="witem okbanner" style="margin-top:.6rem"><span class="wnum" style="background:#059669;color:#fff">20</span>送分題（自動計入 +' + BONUS + ' 分）・滿分 100 分</div>' : '');
 }
 function openWordListModal() {
   if (isQuizActive) return;
   $('wordListModal').classList.remove('hidden'); var sb = $('wlStartBtn'); if (sb) sb.style.display = $('startView').classList.contains('hidden') ? 'none' : '';
   if (wordList) { renderWordList(wordList); return; }
   $('wordListContainer').innerHTML = '<div class="muted">載入中…</div>';
-  api('api_wordList', token).then(function (r) {
+  api('api_wordList', token, selectedRange).then(function (r) {
     if (!r.ok) { $('wordListContainer').innerHTML = '<div class="muted">' + esc(r.msg) + '</div>'; return; }
     wordList = r.list; renderWordList(wordList);
   }).catch(function (e) { $('wordListContainer').innerHTML = '<div class="muted">載入失敗：' + esc(e && e.message || e) + '</div>'; });
