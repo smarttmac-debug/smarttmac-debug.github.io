@@ -86,12 +86,41 @@ main { max-width:720px; margin:0 auto; padding:1rem 1rem 6rem; }
 .map-wrap.zoomed .map-inner { transform: scale(2.35); }
 
 footer { text-align:center; color:var(--muted); font-size:.75rem; margin:1.5rem 0 0; }
+
+body.exam-lock{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.hrow{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem}
+.hbtns{flex:none}
+.pill{appearance:none;border:0;border-radius:999px;padding:.4rem .7rem;font-size:.8rem;font-weight:700;background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+.pill:active{transform:scale(.98)}
+.seatbadge{display:inline-block;margin-left:.35rem;padding:.05rem .4rem;border-radius:.4rem;background:rgba(255,255,255,.22);font-size:.75rem;font-weight:700}
+.seatbox{margin:1rem 0 .4rem;padding:.9rem .85rem;background:#f6f3ee;border:1px solid var(--line);border-radius:12px}
+.seatbox label{display:block;font-size:.82rem;font-weight:700;color:#475569;margin-bottom:.3rem}
+.req{color:#e11d48}
+input.seat{width:100%;font-size:16px;padding:.7rem .8rem;border:2px solid var(--line);border-radius:.8rem;background:#fff;outline:none}
+input.seat:focus{border-color:var(--brand)}
+input.seat.err{border-color:var(--bad);background:var(--badbg)}
+.errmsg{color:var(--bad);font-size:.85rem;font-weight:700;margin:.45rem 0 0}
+.leavebar{font-size:.8rem;color:var(--muted);margin:0 0 .55rem}
+.leavebar.warn{color:var(--bad);font-weight:700}
+.pass{text-align:center;font-weight:800;margin:.2rem 0 .8rem}
+.pass.ok{color:var(--ok)}
+.pass.bad{color:var(--bad)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:80;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal .box{background:#fff;border-radius:16px;padding:1.15rem;max-width:20rem;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal h3{margin:0 0 .4rem;font-size:1.05rem}
+.modal p{margin:0 0 .9rem;color:var(--muted);font-size:.9rem}
+.busy{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#1c1917;color:#fff;padding:.55rem 1rem;border-radius:999px;font-size:.85rem;font-weight:700;z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
 <header>
-  <h1>臺灣的地形</h1>
-  <p>七年級社會 · 選擇題複習</p>
+  <div class="hrow">
+    <div>
+      <h1>臺灣的地形</h1>
+      <p>七年級社會 · 選擇題複習 <span id="seatBadge" class="seatbadge hidden"></span></p>
+    </div>
+    <button type="button" class="pill hidden" id="btnRestartTop">↺ 重新開始</button>
+  </div>
 </header>
 <main>
   <section id="review">
@@ -125,6 +154,11 @@ footer { text-align:center; color:var(--muted); font-size:.75rem; margin:1.5rem 
 <li><span class="sym">丙</span><span class="kind">山脈</span><span class="ans">玉山山脈</span></li>
 <li><span class="sym">丁</span><span class="kind">山脈</span><span class="ans">阿里山山脈</span></li>
 </ul></section>
+      <div class="seatbox">
+        <label for="seatInput">座號 <span class="req">*</span></label>
+        <input class="seat" id="seatInput" type="text" inputmode="numeric" maxlength="2" placeholder="例如：03、13、21" autocomplete="off">
+        <p id="seatErrorMsg" class="errmsg hidden"></p>
+      </div>
       <button class="btn" id="btnStart">開始測驗</button>
     </div>
   </section>
@@ -132,6 +166,7 @@ footer { text-align:center; color:var(--muted); font-size:.75rem; margin:1.5rem 
   <section id="quiz" class="hidden">
     <div class="card">
       <div class="progress" id="progress"></div>
+      <div class="leavebar" id="leaveBar">離開 0 次</div>
       <p class="q-title">這一格是什麼？</p>
       <p class="q-sub" id="qsub"></p>
       <div class="map-wrap" id="mapWrap">
@@ -152,132 +187,298 @@ footer { text-align:center; color:var(--muted); font-size:.75rem; margin:1.5rem 
       <p class="q-title" style="text-align:center">測驗結束</p>
       <div class="score-num" id="scoreNum"></div>
       <p class="score-sub" id="scoreSub"></p>
+      <p class="pass hidden" id="passMark"></p>
       <button class="btn hidden" id="btnRetryWrong">只重測錯題</button>
       <button class="btn sec" id="btnRetryAll">重新開始</button>
       <button class="btn ghost" id="btnBack">回到複習表</button>
     </div>
   </section>
-  <footer>答案以課本／學習單為準。不必登入。</footer>
+  <footer>答案以課本／學習單為準。不必登入帳號，作答前請先填座號。</footer>
 </main>
+<div id="restartModal" class="modal hidden">
+  <div class="box">
+    <h3>確定要重新開始嗎？</h3>
+    <p>目前這次會記成「中斷離開」，然後從頭再考一次。</p>
+    <button class="btn" id="btnRestartYes">重新開始</button>
+    <button class="btn ghost" id="btnRestartNo">取消</button>
+  </div>
+</div>
+<div id="busy" class="busy hidden">處理中…</div>
 <script>
-const CATS = {"basin": {"name": "盆地", "options": ["臺北盆地", "臺中盆地", "埔里盆地", "泰源盆地"]}, "plain": {"name": "平原", "options": ["蘭陽平原", "花東縱谷平原", "濁水溪沖積平原", "嘉南平原", "屏東平原"]}, "tableland": {"name": "台地", "options": ["林口台地", "桃園台地", "大肚台地", "八卦台地"]}, "hill": {"name": "丘陵", "options": ["竹東丘陵", "苗栗丘陵"]}, "mountain": {"name": "山脈", "options": ["雪山山脈", "中央山脈", "玉山山脈", "阿里山山脈", "海岸山脈"]}};
-const ALL = [{"label": "ㄅ", "cat": "basin", "answer": "臺北盆地", "x": 61.67, "y": 3.23, "w": 13.89, "h": 3.84, "shape": "box"}, {"label": "ㄆ", "cat": "basin", "answer": "臺中盆地", "x": 23.39, "y": 34.54, "w": 12.94, "h": 3.31, "shape": "box"}, {"label": "ㄇ", "cat": "basin", "answer": "埔里盆地", "x": 49.67, "y": 42.7, "w": 10.17, "h": 3.01, "shape": "box"}, {"label": "ㄈ", "cat": "basin", "answer": "泰源盆地", "x": 62.61, "y": 68.34, "w": 13.06, "h": 4.84, "shape": "box"}, {"label": "⑤", "cat": "plain", "answer": "蘭陽平原", "x": 77.06, "y": 22.2, "w": 13.17, "h": 3.45, "shape": "box"}, {"label": "④", "cat": "plain", "answer": "花東縱谷平原", "x": 72.94, "y": 42.13, "w": 17.33, "h": 3.31, "shape": "box"}, {"label": "①", "cat": "plain", "answer": "濁水溪沖積平原", "x": 29.89, "y": 44.83, "w": 12.67, "h": 5.36, "shape": "box"}, {"label": "②", "cat": "plain", "answer": "嘉南平原", "x": 21.78, "y": 57.3, "w": 12.22, "h": 3.79, "shape": "box"}, {"label": "③", "cat": "plain", "answer": "屏東平原", "x": 34.11, "y": 75.01, "w": 12.33, "h": 3.36, "shape": "box"}, {"label": "A", "cat": "tableland", "answer": "林口台地", "x": 46.5, "y": 7.54, "w": 12.89, "h": 3.27, "shape": "box"}, {"label": "B", "cat": "tableland", "answer": "桃園台地", "x": 40.78, "y": 12.08, "w": 12.5, "h": 3.18, "shape": "box"}, {"label": "a", "cat": "hill", "answer": "竹東丘陵", "x": 36.22, "y": 17.53, "w": 12.39, "h": 3.14, "shape": "box"}, {"label": "b", "cat": "hill", "answer": "苗栗丘陵", "x": 31.72, "y": 22.33, "w": 12.89, "h": 3.49, "shape": "box"}, {"label": "C", "cat": "tableland", "answer": "大肚台地", "x": 31.28, "y": 27.39, "w": 12.61, "h": 3.49, "shape": "box"}, {"label": "D", "cat": "tableland", "answer": "八卦台地", "x": 20.39, "y": 39.77, "w": 12.28, "h": 2.97, "shape": "box"}, {"label": "甲", "cat": "mountain", "answer": "雪山山脈", "x": 66.89, "y": 17.97, "w": 3.33, "h": 2.62, "shape": "circle"}, {"label": "乙", "cat": "mountain", "answer": "中央山脈", "x": 66.22, "y": 34.19, "w": 3.33, "h": 2.62, "shape": "circle"}, {"label": "戊", "cat": "mountain", "answer": "海岸山脈", "x": 68.22, "y": 45.62, "w": 3.33, "h": 2.62, "shape": "circle"}, {"label": "丙", "cat": "mountain", "answer": "玉山山脈", "x": 46.78, "y": 46.05, "w": 3.78, "h": 2.97, "shape": "circle"}, {"label": "丁", "cat": "mountain", "answer": "阿里山山脈", "x": 51.33, "y": 52.55, "w": 3.78, "h": 2.97, "shape": "circle"}];
-let queue = [];
-let i = 0;
-let correct = 0;
-let answered = 0;
-let wrongIds = [];
-let locked = false;
-let mode = "all";
-
+window.API_URL = 'https://script.google.com/macros/s/AKfycbxJIMaY2G5y8ppeH46Z4xMgMe9pYBBi0qEFG8C2dvubdO8AKzrsv4bCz4g7Wt_2FmCqbw/exec';
+const CATS = {"basin":{"name":"盆地","options":["臺北盆地","臺中盆地","埔里盆地","泰源盆地"]},"plain":{"name":"平原","options":["蘭陽平原","花東縱谷平原","濁水溪沖積平原","嘉南平原","屏東平原"]},"tableland":{"name":"台地","options":["林口台地","桃園台地","大肚台地","八卦台地"]},"hill":{"name":"丘陵","options":["竹東丘陵","苗栗丘陵"]},"mountain":{"name":"山脈","options":["雪山山脈","中央山脈","玉山山脈","阿里山山脈","海岸山脈"]}};
+const ALL = [{"label":"ㄅ","cat":"basin","x":61.67,"y":3.23,"w":13.89,"h":3.84,"shape":"box"},{"label":"ㄆ","cat":"basin","x":23.39,"y":34.54,"w":12.94,"h":3.31,"shape":"box"},{"label":"ㄇ","cat":"basin","x":49.67,"y":42.7,"w":10.17,"h":3.01,"shape":"box"},{"label":"ㄈ","cat":"basin","x":62.61,"y":68.34,"w":13.06,"h":4.84,"shape":"box"},{"label":"⑤","cat":"plain","x":77.06,"y":22.2,"w":13.17,"h":3.45,"shape":"box"},{"label":"④","cat":"plain","x":72.94,"y":42.13,"w":17.33,"h":3.31,"shape":"box"},{"label":"①","cat":"plain","x":29.89,"y":44.83,"w":12.67,"h":5.36,"shape":"box"},{"label":"②","cat":"plain","x":21.78,"y":57.3,"w":12.22,"h":3.79,"shape":"box"},{"label":"③","cat":"plain","x":34.11,"y":75.01,"w":12.33,"h":3.36,"shape":"box"},{"label":"A","cat":"tableland","x":46.5,"y":7.54,"w":12.89,"h":3.27,"shape":"box"},{"label":"B","cat":"tableland","x":40.78,"y":12.08,"w":12.5,"h":3.18,"shape":"box"},{"label":"a","cat":"hill","x":36.22,"y":17.53,"w":12.39,"h":3.14,"shape":"box"},{"label":"b","cat":"hill","x":31.72,"y":22.33,"w":12.89,"h":3.49,"shape":"box"},{"label":"C","cat":"tableland","x":31.28,"y":27.39,"w":12.61,"h":3.49,"shape":"box"},{"label":"D","cat":"tableland","x":20.39,"y":39.77,"w":12.28,"h":2.97,"shape":"box"},{"label":"甲","cat":"mountain","x":66.89,"y":17.97,"w":3.33,"h":2.62,"shape":"circle"},{"label":"乙","cat":"mountain","x":66.22,"y":34.19,"w":3.33,"h":2.62,"shape":"circle"},{"label":"戊","cat":"mountain","x":68.22,"y":45.62,"w":3.33,"h":2.62,"shape":"circle"},{"label":"丙","cat":"mountain","x":46.78,"y":46.05,"w":3.78,"h":2.97,"shape":"circle"},{"label":"丁","cat":"mountain","x":51.33,"y":52.55,"w":3.78,"h":2.97,"shape":"circle"}];
 const $ = (id) => document.getElementById(id);
 const reviewEl = $("review"), quizEl = $("quiz"), resultEl = $("result");
+let BOOT = { leaveLimit: 3, passScore: 70, total: 20 };
+let token = null, queue = [], i = 0, correct = 0, answered = 0, wrongIds = [], locked = false, mode = "all";
+let studentSeat = "", isQuizActive = false, interruptSent = false, lastWrongIds = [];
+let isAway = false, awayStartTime = 0, totalAwayCount = 0, totalAwayMs = 0, cheatLogs = [], pasteAttemptCount = 0;
+let LEAVE_LIMIT = 3, PASS = 70, busy = false;
 
-function show(el) {
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function hhmmss(d){ return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
+function toast(t){ const b=$("busy"); b.textContent=t; b.classList.remove("hidden"); clearTimeout(toast._t); toast._t=setTimeout(()=>b.classList.add("hidden"), 2500); }
+function setBusy(on, t){ busy=on; const b=$("busy"); if(on){ b.textContent=t||'處理中…'; b.classList.remove("hidden"); } else b.classList.add("hidden"); }
+
+function api(fn){
+  const args = Array.prototype.slice.call(arguments, 1);
+  return fetch(window.API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({fn:fn, args:args}), redirect:'follow', credentials:'omit' })
+    .then(r => r.json())
+    .then(j => { if(j && j.ok) return j.result; throw new Error((j && j.error) || '伺服器錯誤'); });
+}
+
+function show(el){
   reviewEl.classList.add("hidden");
   quizEl.classList.add("hidden");
   resultEl.classList.add("hidden");
   el.classList.remove("hidden");
-  window.scrollTo(0,0);
-}
-
-function start(list, m) {
-  queue = list.map((q,idx) => ({...q, _id: q.label + "-" + idx}));
-  if (m === "all") {
-    queue = ALL.map((q,idx) => ({...q, _id: q.label + "-" + idx}));
+  if(el!==quizEl){
+    $("btnRestartTop").classList.add("hidden");
+    document.body.classList.remove("exam-lock");
   }
-  i = 0; correct = 0; answered = 0; wrongIds = []; mode = m;
-  show(quizEl);
-  render();
 }
 
-function render() {
-  locked = false;
-  const q = queue[i];
-  const cat = CATS[q.cat];
-  $("progress").textContent = "第 " + (i+1) + " / " + queue.length + " 題";
-  $("qsub").textContent = "代號 " + q.label + "（" + cat.name + "）";
-  const hl = $("hl");
-  hl.className = "hl" + (q.shape === "circle" ? " circle" : "");
-  hl.style.left = q.x + "%";
-  hl.style.top = q.y + "%";
-  hl.style.width = q.w + "%";
-  hl.style.height = q.h + "%";
+function seatError(seat){
+  seat = String(seat==null?'':seat).trim();
+  if(!seat) return '請先輸入「座號」再開始答題！';
+  if(/^[1-9]$/.test(seat)) return '座號請輸入兩位數，例如「'+seat+'」請改成「0'+seat+'」';
+  if(!/^\d{2}$/.test(seat)) return '座號必須是兩位數字，而且只能是 01–13 或 21–38';
+  const n = Number(seat);
+  if((n>=1 && n<=13) || (n>=21 && n<=38)) return '';
+  return '座號必須是 01–13 或 21–38';
+}
+function showStartError(t){ const m=$("seatErrorMsg"); m.textContent=t; m.classList.remove("hidden"); $("seatInput").classList.add("err"); }
+
+function resetAntiCheat(){ isAway=false; totalAwayCount=0; totalAwayMs=0; cheatLogs=[]; pasteAttemptCount=0; updateLeaveBar(); }
+function updateLeaveBar(){
+  const el=$("leaveBar"); if(!el) return;
+  el.textContent = '離開 '+totalAwayCount+' 次'+(totalAwayCount>LEAVE_LIMIT?'（已超過上限，將記成中斷離開）':'');
+  el.classList.toggle('warn', totalAwayCount>LEAVE_LIMIT);
+}
+function curQLabel(){ const q=queue[i]; return q ? q.label : (i+1); }
+function startAway(reason){ if(!isQuizActive || isAway) return; isAway=true; awayStartTime=Date.now(); }
+function endAway(reason){
+  if(!isAway) return;
+  const ms = Date.now()-awayStartTime; isAway=false;
+  totalAwayCount++; totalAwayMs += ms;
+  cheatLogs.push({ time:hhmmss(new Date()), q:curQLabel(), reason:reason||'離開', sec:(ms/1000).toFixed(2) });
+  updateLeaveBar();
+  if(isQuizActive && !interruptSent && totalAwayCount>LEAVE_LIMIT) reportInterrupt('超過離開上限', false);
+}
+function logInstantLeave(reason){
+  if(!isQuizActive) return;
+  totalAwayCount++;
+  cheatLogs.push({ time:hhmmss(new Date()), q:curQLabel(), reason:reason, sec:'0.00' });
+  updateLeaveBar();
+}
+function interruptPayload(reason){
+  return JSON.stringify({ fn:'api_geo_leave', args:[token, curQLabel(), {
+    leaveCount:totalAwayCount, leaveMs:totalAwayMs, paste:pasteAttemptCount, reason:reason, logs:cheatLogs
+  }]});
+}
+function reportInterrupt(reason, useBeacon){
+  if(!isQuizActive || interruptSent || !token) return false;
+  interruptSent=true;
+  if(isAway) endAway(reason);
+  isQuizActive=false;
+  const payload=interruptPayload(reason), url=window.API_URL;
+  let sent=false;
+  if(url){
+    try{ fetch(url,{method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:payload, keepalive:true, credentials:'omit', redirect:'follow'}); sent=true; }catch(e){ sent=false; }
+  }
+  if(!sent && useBeacon && url && navigator.sendBeacon){
+    try{ sent=navigator.sendBeacon(url, new Blob([payload],{type:'text/plain;charset=UTF-8'})); }catch(e){ sent=false; }
+  }
+  return sent;
+}
+function setupAntiCheatListeners(){
+  document.addEventListener('visibilitychange', function(){
+    if(!isQuizActive) return;
+    if(document.hidden){
+      startAway('切換分頁 / 切換其他 App');
+      if(totalAwayCount+(isAway?1:0)>LEAVE_LIMIT) reportInterrupt('超過離開上限', true);
+    } else endAway('切換分頁 / 切換其他 App');
+  });
+  window.addEventListener('pagehide', function(e){
+    if(!isQuizActive) return;
+    if(e && e.persisted) return;
+    if(isAway) endAway('關閉或離開頁面');
+    reportInterrupt('關閉或離開頁面', true);
+  });
+  window.addEventListener('beforeunload', function(){
+    if(!isQuizActive) return;
+    if(isAway) endAway('關閉或離開頁面');
+    reportInterrupt('關閉或離開頁面', true);
+  });
+  window.addEventListener('blur', function(){ if(isQuizActive && !document.hidden) startAway('視窗失焦 / 下拉通知欄'); });
+  window.addEventListener('focus', function(){ if(isQuizActive && !document.hidden) endAway('視窗失焦 / 下拉通知欄'); });
+  document.addEventListener('contextmenu', function(e){ if(isQuizActive) e.preventDefault(); });
+  ['copy','cut'].forEach(function(ev){ document.addEventListener(ev, function(e){ if(isQuizActive){ e.preventDefault(); pasteAttemptCount++; } }); });
+  ['selectstart','dragstart'].forEach(function(ev){ document.addEventListener(ev, function(e){ if(isQuizActive && !(e.target && (e.target.id==='seatInput'))) e.preventDefault(); }); });
+}
+
+function setZoomOrigin(q){
+  $("mapInner").style.setProperty("--ox", (q.x + q.w/2) + "%");
+  $("mapInner").style.setProperty("--oy", (q.y + q.h/2) + "%");
+}
+const mapWrap = $("mapWrap");
+if(mapWrap){ mapWrap.addEventListener("click", () => mapWrap.classList.toggle("zoomed")); }
+
+function highlight(q){
+  const hl=$("hl");
+  hl.style.left=q.x+"%"; hl.style.top=q.y+"%"; hl.style.width=q.w+"%"; hl.style.height=q.h+"%";
+  hl.className = "hl" + (q.shape==="circle" ? " circle" : "");
   setZoomOrigin(q);
-  if (mapWrap) mapWrap.classList.remove("zoomed");
-  $("fb").className = "fb";
-  $("fb").textContent = "";
+  mapWrap.classList.remove("zoomed");
+}
+
+function render(){
+  locked=false;
+  const q=queue[i];
+  $("progress").textContent = "第 " + (i+1) + " / " + queue.length + " 題";
+  $("qsub").textContent = "請選出「" + q.label + "」的正確名稱（" + CATS[q.cat].name + "）";
+  $("fb").className="fb"; $("fb").textContent="";
   $("btnNext").classList.add("hidden");
-  const box = $("options");
-  box.innerHTML = "";
-  cat.options.forEach(name => {
-    const b = document.createElement("button");
-    b.className = "opt";
-    b.type = "button";
-    b.textContent = name;
+  highlight(q);
+  const box=$("options"); box.innerHTML="";
+  CATS[q.cat].options.forEach(name => {
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt"; b.textContent=name;
     b.addEventListener("click", () => choose(name, b));
     box.appendChild(b);
   });
 }
 
-function choose(name, btn) {
-  if (locked) return;
-  locked = true;
-  const q = queue[i];
-  const ok = name === q.answer;
-  answered++;
-  const btns = [...document.querySelectorAll(".opt")];
-  btns.forEach(b => b.disabled = true);
-  if (ok) {
-    correct++;
-    btn.classList.add("ok");
-    $("fb").className = "fb show ok";
-    $("fb").textContent = "答對了！";
-    setTimeout(next, 450);
-  } else {
-    wrongIds.push(q);
-    btn.classList.add("bad");
-    btns.forEach(b => { if (b.textContent === q.answer) b.classList.add("mark"); });
-    $("fb").className = "fb show bad";
-    $("fb").textContent = "正確答案是「" + q.answer + "」";
-    $("btnNext").classList.remove("hidden");
-  }
+function choose(name, btn){
+  if(locked || !isQuizActive || busy) return;
+  locked=true;
+  setBusy(true, "判分中…");
+  const q=queue[i];
+  api("api_geo_check", token, q.label, name).then(function(r){
+    setBusy(false);
+    const btns=Array.from(document.querySelectorAll("#options .opt"));
+    btns.forEach(b => b.disabled=true);
+    answered++;
+    if(r.correct){
+      correct++;
+      btn.classList.add("ok");
+      $("fb").className="fb show ok";
+      $("fb").textContent="答對了！";
+      setTimeout(next, 450);
+    } else {
+      wrongIds.push(q);
+      btn.classList.add("bad");
+      if(r.answer){ btns.forEach(b => { if(b.textContent===r.answer) b.classList.add("mark"); }); }
+      $("fb").className="fb show bad";
+      $("fb").textContent = r.answer ? ("正確答案是「"+r.answer+"」") : "答錯了";
+      $("btnNext").classList.remove("hidden");
+    }
+  }).catch(function(e){
+    setBusy(false); locked=false;
+    $("fb").className="fb show bad";
+    $("fb").textContent="連線失敗，請再試一次："+(e && e.message || e);
+  });
 }
 
-function next() {
+function next(){
   i++;
-  if (i >= queue.length) finish();
+  if(i>=queue.length) finish();
   else render();
 }
 
-function finish() {
-  show(resultEl);
-  $("scoreNum").textContent = correct + " / " + answered;
-  $("scoreSub").textContent = "答對 " + correct + " 題，共 " + answered + " 題";
-  if (wrongIds.length) $("btnRetryWrong").classList.remove("hidden");
-  else $("btnRetryWrong").classList.add("hidden");
-}
-
-$("btnStart").addEventListener("click", () => start(ALL, "all"));
-$("btnNext").addEventListener("click", next);
-$("btnRetryAll").addEventListener("click", () => start(ALL, "all"));
-$("btnRetryWrong").addEventListener("click", () => {
-  const list = wrongIds.map(q => ({...q}));
-  start(list, "wrong");
-});
-$("btnBack").addEventListener("click", () => show(reviewEl));
-
-const mapWrap = $("mapWrap");
-const mapInner = $("mapInner");
-function setZoomOrigin(q) {
-  mapInner.style.setProperty("--ox", (q.x + q.w/2) + "%");
-  mapInner.style.setProperty("--oy", (q.y + q.h/2) + "%");
-}
-if (mapWrap) {
-  mapWrap.addEventListener("click", () => {
-    mapWrap.classList.toggle("zoomed");
+function finish(){
+  isQuizActive=false;
+  $("btnRestartTop").classList.add("hidden");
+  document.body.classList.remove("exam-lock");
+  setBusy(true, "送出成績…");
+  api("api_geo_finish", token, { leaveCount:totalAwayCount, leaveMs:totalAwayMs, paste:pasteAttemptCount, logs:cheatLogs }).then(function(r){
+    setBusy(false);
+    show(resultEl);
+    const score = r && r.score!=null ? r.score : Math.round(100*correct/Math.max(1,answered));
+    const right = r && r.right!=null ? r.right : correct;
+    const total = r && r.total!=null ? r.total : answered;
+    const passScore = r && r.passScore!=null ? r.passScore : PASS;
+    const passed = r && r.passed!=null ? r.passed : score>=passScore;
+    $("scoreNum").textContent = score + " 分";
+    $("scoreSub").textContent = "答對 " + right + " / " + total + "　及格分數 " + passScore;
+    const pm=$("passMark"); pm.classList.remove("hidden"); pm.className="pass "+(passed?"ok":"bad");
+    pm.textContent = passed ? "及格" : "未達及格分數";
+    lastWrongIds = (r && r.wrong && r.wrong.length) ? r.wrong.slice() : wrongIds.map(q=>q.label);
+    if(lastWrongIds.length) $("btnRetryWrong").classList.remove("hidden");
+    else $("btnRetryWrong").classList.add("hidden");
+  }).catch(function(e){
+    setBusy(false);
+    show(resultEl);
+    $("scoreNum").textContent = Math.round(100*correct/Math.max(1,answered)) + " 分";
+    $("scoreSub").textContent = "成績寫入失敗："+(e && e.message || e)+"。畫面成績：答對 "+correct+" / "+answered;
+    $("passMark").classList.add("hidden");
+    lastWrongIds = wrongIds.map(q=>q.label);
+    if(lastWrongIds.length) $("btnRetryWrong").classList.remove("hidden");
   });
 }
+
+function beginSession(startMode, ids){
+  setBusy(true, "準備題目中…");
+  $("btnStart").disabled=true;
+  const payload = { seat:studentSeat, mode: startMode==="wrong" ? "wrong" : "full" };
+  if(ids && ids.length) payload.ids = ids;
+  return api("api_geo_start", payload).then(function(r){
+    setBusy(false); $("btnStart").disabled=false;
+    if(!r || !r.ok){ showStartError((r && r.msg) || "無法開始測驗"); return; }
+    token=r.token; interruptSent=false; resetAntiCheat();
+    const byLabel = {}; ALL.forEach(q => { byLabel[q.label]=q; });
+    const list = (r.questions||[]).map(q => byLabel[q.label || q.id]).filter(Boolean);
+    queue = list.length ? list : ALL.slice();
+    i=0; correct=0; answered=0; wrongIds=[]; mode=startMode; locked=false;
+    isQuizActive=true;
+    document.body.classList.add("exam-lock");
+    $("btnRestartTop").classList.remove("hidden");
+    const sb=$("seatBadge"); sb.textContent="座號："+studentSeat; sb.classList.remove("hidden");
+    show(quizEl);
+    render();
+  }).catch(function(e){
+    setBusy(false); $("btnStart").disabled=false;
+    showStartError("連線失敗："+(e && e.message || e));
+  });
+}
+
+function startQuiz(){
+  const seat=$("seatInput").value.trim();
+  const err=seatError(seat);
+  if(err){ showStartError(err); const s=$("seatInput"); s.classList.add("err"); s.focus(); return; }
+  studentSeat=seat; $("seatErrorMsg").classList.add("hidden"); $("seatInput").classList.remove("err");
+  beginSession("all", null);
+}
+
+function askRestart(){ if(!isQuizActive || busy) return; $("restartModal").classList.remove("hidden"); }
+function closeRestart(){ $("restartModal").classList.add("hidden"); }
+function doRestart(){
+  closeRestart();
+  if(token && isQuizActive) reportInterrupt("重新開始", false);
+  isQuizActive=false;
+  beginSession("all", null);
+}
+
+$("btnStart").addEventListener("click", startQuiz);
+$("seatInput").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); startQuiz(); } });
+$("seatInput").addEventListener("input", function(){ $("seatErrorMsg").classList.add("hidden"); $("seatInput").classList.remove("err"); });
+$("btnNext").addEventListener("click", next);
+$("btnRetryAll").addEventListener("click", function(){ if(!studentSeat){ show(reviewEl); return; } beginSession("all", null); });
+$("btnRetryWrong").addEventListener("click", function(){ if(!lastWrongIds.length){ beginSession("all", null); return; } beginSession("wrong", lastWrongIds.slice()); });
+$("btnBack").addEventListener("click", function(){ show(reviewEl); $("seatBadge").classList.add("hidden"); });
+$("btnRestartTop").addEventListener("click", askRestart);
+$("btnRestartYes").addEventListener("click", doRestart);
+$("btnRestartNo").addEventListener("click", closeRestart);
+
+setupAntiCheatListeners();
+api("api_geo_boot").then(function(r){
+  if(!r) return;
+  BOOT=r;
+  if(r.leaveLimit!=null) LEAVE_LIMIT=r.leaveLimit;
+  if(r.passScore!=null) PASS=r.passScore;
+}).catch(function(){ /* 複習表仍可先看，開始測驗時再連後端 */ });
 </script>
 </body>
 </html>
