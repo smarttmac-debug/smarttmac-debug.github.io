@@ -151,8 +151,8 @@ input.seat.err{border-color:var(--bad);background:var(--badbg)}
 <li><span class="sym">甲</span><span class="kind">山脈</span><span class="ans">雪山山脈</span></li>
 <li><span class="sym">乙</span><span class="kind">山脈</span><span class="ans">中央山脈</span></li>
 <li><span class="sym">戊</span><span class="kind">山脈</span><span class="ans">海岸山脈</span></li>
-<li><span class="sym">丙</span><span class="kind">山脈</span><span class="ans">玉山山脈</span></li>
-<li><span class="sym">丁</span><span class="kind">山脈</span><span class="ans">阿里山山脈</span></li>
+<li><span class="sym">丙</span><span class="kind">山脈</span><span class="ans">阿里山山脈</span></li>
+<li><span class="sym">丁</span><span class="kind">山脈</span><span class="ans">玉山山脈</span></li>
 </ul></section>
       <div class="seatbox">
         <label for="seatInput">座號 <span class="req">*</span></label>
@@ -216,7 +216,7 @@ let studentSeat = "", isQuizActive = false, interruptSent = false, lastWrongIds 
 let isAway = false, awayStartTime = 0, totalAwayCount = 0, totalAwayMs = 0, cheatLogs = [], pasteAttemptCount = 0;
 let LEAVE_LIMIT = 3, PASS = 70, busy = false;
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c])); }
 function pad(n){ return String(n).padStart(2,'0'); }
 function hhmmss(d){ return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
 function toast(t){ const b=$("busy"); b.textContent=t; b.classList.remove("hidden"); clearTimeout(toast._t); toast._t=setTimeout(()=>b.classList.add("hidden"), 2500); }
