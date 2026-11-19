@@ -216,7 +216,7 @@ let studentSeat = "", isQuizActive = false, interruptSent = false, lastWrongIds 
 let isAway = false, awayStartTime = 0, totalAwayCount = 0, totalAwayMs = 0, cheatLogs = [], pasteAttemptCount = 0;
 let LEAVE_LIMIT = 3, PASS = 70, busy = false;
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c])); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'\u0026amp;','<':'\u0026lt;','>':'\u0026gt;','"':'\u0026quot;',"'":'\u0026#39;'}[c])); }
 function pad(n){ return String(n).padStart(2,'0'); }
 function hhmmss(d){ return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
 function toast(t){ const b=$("busy"); b.textContent=t; b.classList.remove("hidden"); clearTimeout(toast._t); toast._t=setTimeout(()=>b.classList.add("hidden"), 2500); }
