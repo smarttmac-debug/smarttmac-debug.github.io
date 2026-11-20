@@ -42,21 +42,23 @@ button{font-size:17px;font-weight:700;min-height:42px;padding:0 14px;border-radi
 <script>
 var API='https://script.google.com/macros/s/AKfycbywQvfNKWqSi5ZpAnwFmTw00T40NidyTA86j6p6bF6QxrR6rMJ1UJ5XWUte7TCQSWwR/exec';
 var TIMES={'早上':'07:30–07:40','中午':'12:15–12:30','下午':'14:50–15:05'};
-var R={in:[['11','內掃負責人：排掃具'],['21','講台、黑板'],['27','講台、黑板'],['03','左掃、右掃'],['04','左掃、右掃'],['31','左拖、右拖'],['34','左拖、右拖'],['05','左窗'],['10','左窗'],['13','左窗'],['24','右窗'],['26','右窗'],['38','導師桌'],['25','陽台'],['36','垃圾'],['32','午餐整理']],
-fe:[['08','女廁負責人：排掃具'],['12','垃圾'],['09','廁所'],['02','洗手台'],['06','地板（含便盆周圍地板）'],['07','地板（含便盆周圍地板）']],
-ma:[['29','男廁負責人：排掃具'],['35','垃圾'],['28','小便斗'],['22','洗手台'],['23','地板（含便盆周圍及身心障礙廁所地板）'],['33','地板（含便盆周圍及身心障礙廁所地板）'],['30','男便盆、身心障礙馬桶'],['01','司令台']]};
+var R={in:[['11','內掃負責人：排掃具'],['21','講台、黑板'],['27','講台、黑板'],['03','左掃地'],['04','右掃地'],['31','左拖地'],['34','右拖地'],['05','左窗'],['10','左窗'],['13','左窗'],['24','右窗'],['26','右窗'],['38','導師桌與地板掃拖'],['25','陽台掃拖與洗手台'],['36','垃圾與回收整理'],['32','午餐整理','中午']],
+fe:[['08','女廁負責人：排掃具'],['12','女廁垃圾整理'],['09','女便盆刷洗'],['02','洗手台刷洗與擦乾'],['06','地板（含便盆周圍地板）'],['07','地板（含便盆周圍地板）']],
+ma:[['29','男廁負責人：排掃具'],['35','男廁垃圾整理'],['28','小便斗刷洗'],['22','洗手台刷洗與擦乾'],['23','地板（含便盆周圍及身心障礙廁所地板）'],['33','廁所前、司令台、升旗台地板'],['30','男便盆、身心障礙馬桶刷洗'],['01','司令台']]};
 function $(id){return document.getElementById(id)}
 function sessFor(h){return h<11?'早上':(h<14?'中午':'下午')}
 function tpeNow(){var d=new Date(Date.now()+8*3600e3);return {date:d.toISOString().slice(0,10),h:d.getUTCHours()}}
 function shift(ds,n){var d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
 function color(s){s.className=s.value==='打掃完成'?'ok':(s.value==='打掃未通過'?'ng':'')}
+function active(s){return !s.dataset.only||s.dataset.only===$('sess').value}
+function syncRows(){var se=$('sess').value;document.querySelectorAll('.row[data-only]').forEach(function(row){var show=row.dataset.only===se;row.style.display=show?'':'none';if(!show){var s=row.querySelector('select');s.value='';color(s);}})}
 function build(){Object.keys(R).forEach(function(k){var box=$('l_'+k);R[k].forEach(function(r){
- var d=document.createElement('div');d.className='row';
- d.innerHTML='<span class="seat">'+r[0]+'</span><span class="job">'+r[1]+'</span><select data-seat="'+r[0]+'" data-g="'+k+'"><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select>';
+ var d=document.createElement('div');d.className='row';if(r[2])d.dataset.only=r[2];
+ d.innerHTML='<span class="seat">'+r[0]+'</span><span class="job">'+r[1]+'</span><select data-seat="'+r[0]+'" data-g="'+k+'"'+(r[2]?' data-only="'+r[2]+'"':'')+'><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select>';
  box.appendChild(d);});});
  document.querySelectorAll('select[data-seat]').forEach(function(s){s.onchange=function(){color(s);count();dirty=true}});
  document.querySelectorAll('select[data-all]').forEach(function(a){a.onchange=function(){if(!a.value)return;
-  document.querySelectorAll('select[data-g="'+a.dataset.all+'"]').forEach(function(s){s.value=a.value;color(s)});a.value='';count();dirty=true}});}
+  document.querySelectorAll('select[data-g="'+a.dataset.all+'"]').forEach(function(s){if(!active(s))return;s.value=a.value;color(s)});a.value='';count();dirty=true}});}
 var dirty=false;
 function renderFail(list){var el=$('fl');if(!list)return;el.innerHTML='';
  if(!list.length){el.innerHTML='<span class="muted">近一個月無未通過紀錄</span>';return}
@@ -65,17 +67,17 @@ function renderFail(list){var el=$('fl');if(!list)return;el.innerHTML='';
   var b=document.createElement('span');b.className='c';b.textContent='累積'+x.count+'次';
   var c=document.createElement('span');c.className='dt';c.textContent=x.details.map(function(t){return t.text}).join('、');
   d.appendChild(a);d.appendChild(b);d.appendChild(c);el.appendChild(d)})}
-function count(){var a=0,b=0,c=0;document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value==='打掃完成')a++;else if(s.value==='打掃未通過')b++;else c++});$('n1').textContent=a;$('n2').textContent=b;$('n3').textContent=c}
+function count(){var a=0,b=0,c=0;document.querySelectorAll('select[data-seat]').forEach(function(s){if(!active(s))return;if(s.value==='打掃完成')a++;else if(s.value==='打掃未通過')b++;else c++});$('n1').textContent=a;$('n2').textContent=b;$('n3').textContent=c}
 function call(fn,args){return fetch(API,{method:'POST',redirect:'follow',credentials:'omit',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:fn,args:args})}).then(function(r){return r.json()}).then(function(j){if(!j.ok)throw new Error(j.error||'錯誤');return j.result})}
 function hdr(){$('hdr').textContent=$('date').value+' '+$('sess').value;$('sessTime').textContent=TIMES[$('sess').value]}
-function load(){hdr();$('st').textContent='讀取中…';$('msg').textContent='';
+function load(){hdr();syncRows();$('st').textContent='讀取中…';$('msg').textContent='';
  document.querySelectorAll('select[data-seat]').forEach(function(s){s.value='';color(s)});count();
  var d=$('date').value,se=$('sess').value;
  call('cleanGet',[d,se]).then(function(r){renderFail(r.recentFailed);if(d!==$('date').value||se!==$('sess').value)return;
-  document.querySelectorAll('select[data-seat]').forEach(function(s){s.value=r.results[s.dataset.seat]||'';color(s)});count();dirty=false;
+  document.querySelectorAll('select[data-seat]').forEach(function(s){s.value=active(s)?(r.results[s.dataset.seat]||''):'';color(s)});count();dirty=false;
   $('st').textContent=r.updated?('已儲存 '+r.updated):'尚無紀錄';}).catch(function(e){$('st').textContent='讀取失敗：'+e.message})}
 function change(){if(dirty&&!confirm('尚未儲存，確定切換？'))return false;dirty=false;load();return true}
-$('save').onclick=function(){var res={};document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value)res[s.dataset.seat]=s.value});
+$('save').onclick=function(){var res={};document.querySelectorAll('select[data-seat]').forEach(function(s){if(active(s)&&s.value)res[s.dataset.seat]=s.value});
  $('save').disabled=true;$('msg').textContent='儲存中…';
  call('cleanSave',[$('date').value,$('sess').value,res]).then(function(r){renderFail(r.recentFailed);dirty=false;$('msg').textContent='✅ 已儲存 '+r.saved+' 筆（'+r.updated+'）';$('st').textContent='已儲存 '+r.updated})
  .catch(function(e){$('msg').textContent='❌ 儲存失敗：'+e.message}).then(function(){$('save').disabled=false})};
