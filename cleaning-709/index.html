@@ -7,7 +7,8 @@ header{padding:10px 16px;background:#1f3a5f;color:#fff;display:flex;flex-wrap:wr
 header h1{font-size:24px;margin:0}#hdr{font-size:19px;font-weight:700}#st{margin-left:auto;font-size:16px}
 .wrap{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"in fe" "ma ed";gap:12px;padding:12px}
 .box{background:#fff;border:2px solid #b8c2cc;border-radius:12px;padding:10px}
-#b_in{grid-area:in}#b_ma{grid-area:ma}#b_fe{grid-area:fe}#b_ed{grid-area:ed;border-color:#1f3a5f}
+#b_in{grid-area:in}#b_ma{grid-area:ma}#rt{grid-area:fe;display:flex;flex-direction:column;gap:12px}#b_fail{flex:1;border-color:#d93025;display:flex;flex-direction:column;min-height:120px}
+#fl{overflow-y:auto;max-height:420px}.fi{display:flex;gap:10px;align-items:baseline;padding:6px 4px;border-bottom:1px solid #f3d0d0;flex-wrap:wrap}.fi .seat{font-size:21px;font-weight:800;color:#a50e0e;width:36px}.fi .c{font-weight:800;color:#a50e0e;background:#fde8e8;border-radius:6px;padding:1px 8px}.fi .dt{flex:1;font-size:16px;min-width:180px}.muted{color:#777}#b_ed{grid-area:ed;border-color:#1f3a5f}
 h2{font-size:21px;margin:0 0 8px;color:#1f3a5f}
 .row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #e3e7ec}
 .row .seat{font-size:21px;font-weight:800;color:#1f3a5f;width:36px}.row .job{flex:1;font-size:16px}
@@ -26,7 +27,8 @@ button{font-size:17px;font-weight:700;min-height:42px;padding:0 14px;border-radi
 <header><h1>709打掃檢查紀錄</h1><span id="hdr"></span><span id="st">讀取中…</span></header>
 <div class="wrap">
 <div class="box" id="b_in"><h2>內掃區</h2><div id="l_in"></div></div>
-<div class="box" id="b_fe"><h2>女廁</h2><div id="l_fe"></div></div>
+<div id="rt"><div class="box" id="b_fe"><h2>女廁</h2><div id="l_fe"></div></div>
+<div class="box" id="b_fail"><h2 style="color:#a50e0e">近一個月打掃未通過名單</h2><div id="fl"><span class="muted">讀取中…</span></div></div></div>
 <div class="box" id="b_ma"><h2>男廁（含司令台）</h2><div id="l_ma"></div></div>
 <div class="box" id="b_ed"><h2>統計編輯區</h2>
 <div class="ctl"><label>日期</label><input type="date" id="date"><button id="prevDay">前一天</button><button id="prevWeek">前一週</button><button id="today">今天</button></div>
@@ -56,19 +58,26 @@ function build(){Object.keys(R).forEach(function(k){var box=$('l_'+k);R[k].forEa
  document.querySelectorAll('select[data-all]').forEach(function(a){a.onchange=function(){if(!a.value)return;
   document.querySelectorAll('select[data-g="'+a.dataset.all+'"]').forEach(function(s){s.value=a.value;color(s)});a.value='';count();dirty=true}});}
 var dirty=false;
+function renderFail(list){var el=$('fl');if(!list)return;el.innerHTML='';
+ if(!list.length){el.innerHTML='<span class="muted">近一個月無未通過紀錄</span>';return}
+ list.forEach(function(x){var d=document.createElement('div');d.className='fi';
+  var a=document.createElement('span');a.className='seat';a.textContent=x.seat;
+  var b=document.createElement('span');b.className='c';b.textContent='累積'+x.count+'次';
+  var c=document.createElement('span');c.className='dt';c.textContent=x.details.map(function(t){return t.text}).join('、');
+  d.appendChild(a);d.appendChild(b);d.appendChild(c);el.appendChild(d)})}
 function count(){var a=0,b=0,c=0;document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value==='打掃完成')a++;else if(s.value==='打掃未通過')b++;else c++});$('n1').textContent=a;$('n2').textContent=b;$('n3').textContent=c}
 function call(fn,args){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:fn,args:args})}).then(function(r){return r.json()}).then(function(j){if(!j.ok)throw new Error(j.error||'錯誤');return j.result})}
 function hdr(){$('hdr').textContent=$('date').value+' '+$('sess').value;$('sessTime').textContent=TIMES[$('sess').value]}
 function load(){hdr();$('st').textContent='讀取中…';$('msg').textContent='';
  document.querySelectorAll('select[data-seat]').forEach(function(s){s.value='';color(s)});count();
  var d=$('date').value,se=$('sess').value;
- call('cleanGet',[d,se]).then(function(r){if(d!==$('date').value||se!==$('sess').value)return;
+ call('cleanGet',[d,se]).then(function(r){renderFail(r.recentFailed);if(d!==$('date').value||se!==$('sess').value)return;
   document.querySelectorAll('select[data-seat]').forEach(function(s){s.value=r.results[s.dataset.seat]||'';color(s)});count();dirty=false;
   $('st').textContent=r.updated?('已儲存 '+r.updated):'尚無紀錄';}).catch(function(e){$('st').textContent='讀取失敗：'+e.message})}
 function change(){if(dirty&&!confirm('尚未儲存，確定切換？'))return false;dirty=false;load();return true}
 $('save').onclick=function(){var res={};document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value)res[s.dataset.seat]=s.value});
  $('save').disabled=true;$('msg').textContent='儲存中…';
- call('cleanSave',[$('date').value,$('sess').value,res]).then(function(r){dirty=false;$('msg').textContent='✅ 已儲存 '+r.saved+' 筆（'+r.updated+'）';$('st').textContent='已儲存 '+r.updated})
+ call('cleanSave',[$('date').value,$('sess').value,res]).then(function(r){renderFail(r.recentFailed);dirty=false;$('msg').textContent='✅ 已儲存 '+r.saved+' 筆（'+r.updated+'）';$('st').textContent='已儲存 '+r.updated})
  .catch(function(e){$('msg').textContent='❌ 儲存失敗：'+e.message}).then(function(){$('save').disabled=false})};
 $('date').onchange=change;$('sess').onchange=change;
 $('prevDay').onclick=function(){$('date').value=shift($('date').value,-1);change()};
