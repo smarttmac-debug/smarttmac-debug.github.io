@@ -1,88 +1,9 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>709打掃檢查紀錄</title>
-<style>
-body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:18px;margin:0;background:#eef1f5;color:#111}
-header{padding:10px 16px;background:#1f3a5f;color:#fff;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
-header h1{font-size:24px;margin:0}#hdr{font-size:19px;font-weight:700}#st{margin-left:auto;font-size:16px}
-.wrap{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"in fe" "ma ed";gap:12px;padding:12px}
-.box{background:#fff;border:2px solid #b8c2cc;border-radius:12px;padding:10px}
-#b_in{grid-area:in}#b_ma{grid-area:ma}#rt{grid-area:fe;display:flex;flex-direction:column;gap:12px}#b_fail{flex:1;border-color:#d93025;display:flex;flex-direction:column;min-height:120px}
-#fl{overflow-y:auto;max-height:420px}.fi{display:flex;gap:10px;align-items:baseline;padding:6px 4px;border-bottom:1px solid #f3d0d0;flex-wrap:wrap}.fi .seat{font-size:21px;font-weight:800;color:#a50e0e;width:36px}.fi .c{font-weight:800;color:#a50e0e;background:#fde8e8;border-radius:6px;padding:1px 8px}.fi .dt{flex:1;font-size:16px;min-width:180px}.muted{color:#777}#b_ed{grid-area:ed;border-color:#1f3a5f}
-h2{font-size:21px;margin:0 0 8px;color:#1f3a5f}
-.row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #e3e7ec}
-.row .seat{font-size:21px;font-weight:800;color:#1f3a5f;width:36px}.row .job{flex:1;font-size:16px}
-select{font-size:17px;padding:5px;border-radius:8px;border:2px solid #9aa7b5;min-height:40px}
-select.ok{background:#e6f6ea;color:#0b6b2b;border-color:#1e8e3e;font-weight:700}
-select.ng{background:#fde8e8;color:#a50e0e;border-color:#d93025;font-weight:700}
-.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}.ctl label{font-weight:700;min-width:84px}
-input[type=date]{font-size:17px;padding:5px;border-radius:8px;border:2px solid #9aa7b5;min-height:40px}
-button{font-size:17px;font-weight:700;min-height:42px;padding:0 14px;border-radius:10px;border:2px solid #1a56db;background:#eaf1ff;color:#1a56db}
-#save{background:#1a56db;color:#fff;width:100%;font-size:22px;min-height:56px;margin-top:8px}
-.cnt{display:flex;gap:10px;flex-wrap:wrap;font-size:19px;font-weight:700;margin:8px 0}
-.cnt span{padding:4px 10px;border-radius:8px}.c1{background:#e6f6ea;color:#0b6b2b}.c2{background:#fde8e8;color:#a50e0e}.c3{background:#eef1f5}
-#msg{font-weight:700;min-height:24px}
-@media(max-width:760px){.wrap{grid-template-columns:1fr;grid-template-areas:"ed" "in" "fe" "ma"}}
-</style></head><body>
-<header><h1>709打掃檢查紀錄</h1><span id="hdr"></span><span id="st">讀取中…</span></header>
-<div class="wrap">
-<div class="box" id="b_in"><h2>內掃區</h2><div id="l_in"></div></div>
-<div id="rt"><div class="box" id="b_fe"><h2>女廁</h2><div id="l_fe"></div></div>
-<div class="box" id="b_fail"><h2 style="color:#a50e0e">近一個月打掃未通過名單</h2><div id="fl"><span class="muted">讀取中…</span></div></div></div>
-<div class="box" id="b_ma"><h2>男廁（含司令台）</h2><div id="l_ma"></div></div>
-<div class="box" id="b_ed"><h2>統計編輯區</h2>
-<div class="ctl"><label>日期</label><input type="date" id="date"><button id="prevDay">前一天</button><button id="prevWeek">前一週</button><button id="today">今天</button></div>
-<div class="ctl"><label>時段</label><select id="sess"><option>早上</option><option>中午</option><option>下午</option></select><span id="sessTime"></span></div>
-<div class="ctl"><label>全選內掃</label><select data-all="in"><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select></div>
-<div class="ctl"><label>全選男廁</label><select data-all="ma"><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select></div>
-<div class="ctl"><label>全選女廁</label><select data-all="fe"><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select></div>
-<div class="cnt"><span class="c1">完成 <b id="n1">0</b></span><span class="c2">未通過 <b id="n2">0</b></span><span class="c3">未選 <b id="n3">0</b></span></div>
-<button id="save">✔ 儲存</button><div id="msg"></div></div>
-</div>
-<script>
-var API='https://script.google.com/macros/s/AKfycbxJIMaY2G5y8ppeH46Z4xMgMe9pYBBi0qEFG8C2dvubdO8AKzrsv4bCz4g7Wt_2FmCqbw/exec';
-var TIMES={'早上':'07:30–07:40','中午':'12:15–12:30','下午':'14:50–15:05'};
-var R={in:[['11','負責人：排掃具'],['21','講台、黑板'],['27','講台、黑板'],['03','左掃、右掃'],['04','左掃、右掃'],['31','左拖、右拖'],['34','左拖、右拖'],['05','左窗'],['10','左窗'],['13','左窗'],['24','右窗'],['26','右窗'],['38','導師桌'],['25','陽台'],['36','垃圾'],['32','午餐整理']],
-fe:[['08','負責人：排掃具'],['12','垃圾'],['09','廁所'],['02','洗手台'],['06','地板（含便盆周圍地板）'],['07','地板（含便盆周圍地板）']],
-ma:[['29','負責人：排掃具'],['35','垃圾'],['28','小便斗'],['22','洗手台'],['23','地板（含便盆周圍及身心障礙廁所地板）'],['33','地板（含便盆周圍及身心障礙廁所地板）'],['30','男便盆、身心障礙馬桶'],['01','司令台']]};
-function $(id){return document.getElementById(id)}
-function sessFor(h){return h<11?'早上':(h<14?'中午':'下午')}
-function tpeNow(){var d=new Date(Date.now()+8*3600e3);return {date:d.toISOString().slice(0,10),h:d.getUTCHours()}}
-function shift(ds,n){var d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
-function color(s){s.className=s.value==='打掃完成'?'ok':(s.value==='打掃未通過'?'ng':'')}
-function build(){Object.keys(R).forEach(function(k){var box=$('l_'+k);R[k].forEach(function(r){
- var d=document.createElement('div');d.className='row';
- d.innerHTML='<span class="seat">'+r[0]+'</span><span class="job">'+r[1]+'</span><select data-seat="'+r[0]+'" data-g="'+k+'"><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select>';
- box.appendChild(d);});});
- document.querySelectorAll('select[data-seat]').forEach(function(s){s.onchange=function(){color(s);count();dirty=true}});
- document.querySelectorAll('select[data-all]').forEach(function(a){a.onchange=function(){if(!a.value)return;
-  document.querySelectorAll('select[data-g="'+a.dataset.all+'"]').forEach(function(s){s.value=a.value;color(s)});a.value='';count();dirty=true}});}
-var dirty=false;
-function renderFail(list){var el=$('fl');if(!list)return;el.innerHTML='';
- if(!list.length){el.innerHTML='<span class="muted">近一個月無未通過紀錄</span>';return}
- list.forEach(function(x){var d=document.createElement('div');d.className='fi';
-  var a=document.createElement('span');a.className='seat';a.textContent=x.seat;
-  var b=document.createElement('span');b.className='c';b.textContent='累積'+x.count+'次';
-  var c=document.createElement('span');c.className='dt';c.textContent=x.details.map(function(t){return t.text}).join('、');
-  d.appendChild(a);d.appendChild(b);d.appendChild(c);el.appendChild(d)})}
-function count(){var a=0,b=0,c=0;document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value==='打掃完成')a++;else if(s.value==='打掃未通過')b++;else c++});$('n1').textContent=a;$('n2').textContent=b;$('n3').textContent=c}
-function call(fn,args){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:fn,args:args})}).then(function(r){return r.json()}).then(function(j){if(!j.ok)throw new Error(j.error||'錯誤');return j.result})}
-function hdr(){$('hdr').textContent=$('date').value+' '+$('sess').value;$('sessTime').textContent=TIMES[$('sess').value]}
-function load(){hdr();$('st').textContent='讀取中…';$('msg').textContent='';
- document.querySelectorAll('select[data-seat]').forEach(function(s){s.value='';color(s)});count();
- var d=$('date').value,se=$('sess').value;
- call('cleanGet',[d,se]).then(function(r){renderFail(r.recentFailed);if(d!==$('date').value||se!==$('sess').value)return;
-  document.querySelectorAll('select[data-seat]').forEach(function(s){s.value=r.results[s.dataset.seat]||'';color(s)});count();dirty=false;
-  $('st').textContent=r.updated?('已儲存 '+r.updated):'尚無紀錄';}).catch(function(e){$('st').textContent='讀取失敗：'+e.message})}
-function change(){if(dirty&&!confirm('尚未儲存，確定切換？'))return false;dirty=false;load();return true}
-$('save').onclick=function(){var res={};document.querySelectorAll('select[data-seat]').forEach(function(s){if(s.value)res[s.dataset.seat]=s.value});
- $('save').disabled=true;$('msg').textContent='儲存中…';
- call('cleanSave',[$('date').value,$('sess').value,res]).then(function(r){renderFail(r.recentFailed);dirty=false;$('msg').textContent='✅ 已儲存 '+r.saved+' 筆（'+r.updated+'）';$('st').textContent='已儲存 '+r.updated})
- .catch(function(e){$('msg').textContent='❌ 儲存失敗：'+e.message}).then(function(){$('save').disabled=false})};
-$('date').onchange=change;$('sess').onchange=change;
-$('prevDay').onclick=function(){$('date').value=shift($('date').value,-1);change()};
-$('prevWeek').onclick=function(){$('date').value=shift($('date').value,-7);change()};
-$('today').onclick=function(){var t=tpeNow();$('date').value=t.date;$('sess').value=sessFor(t.h);change()};
-window.onbeforeunload=function(e){if(dirty){e.preventDefault();return ''}};
-build();var t=tpeNow();$('date').value=t.date;$('sess').value=sessFor(t.h);load();
-</script></body></html>
+<meta http-equiv="refresh" content="0; url=https://script.google.com/macros/s/AKfycbywQvfNKWqSi5ZpAnwFmTw00T40NidyTA86j6p6bF6QxrR6rMJ1UJ5XWUte7TCQSWwR/exec">
+<script>location.replace('https://script.google.com/macros/s/AKfycbywQvfNKWqSi5ZpAnwFmTw00T40NidyTA86j6p6bF6QxrR6rMJ1UJ5XWUte7TCQSWwR/exec')</script>
+</head><body style="font-family:sans-serif;font-size:20px;padding:24px">
+<p>709打掃檢查紀錄已搬到新網址，正在前往…</p>
+<p><a href="https://script.google.com/macros/s/AKfycbywQvfNKWqSi5ZpAnwFmTw00T40NidyTA86j6p6bF6QxrR6rMJ1UJ5XWUte7TCQSWwR/exec">若沒有自動跳轉，請點這裡</a></p>
+</body></html>
