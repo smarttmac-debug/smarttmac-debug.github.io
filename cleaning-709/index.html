@@ -41,7 +41,7 @@ button{font-size:13px;font-weight:700;height:28px;padding:0 8px;border-radius:7p
 .fi .seat{font-size:16px;font-weight:800;color:#a50e0e;width:26px}
 .fi .c{font-weight:800;font-size:13px;color:#a50e0e;background:#fde8e8;border-radius:5px;padding:1px 6px}
 .fi .dt{flex:1;font-size:13.5px;min-width:120px}
-.muted{color:#777;font-size:14px}
+.muted{color:#777;font-size:14px}.tag{font-size:12.5px;color:#777;padding:0 6px;flex-shrink:0}
 @media(max-width:900px){
  html,body{height:auto;overflow:auto}
  .wrap{display:flex;flex-direction:column;overflow:visible;gap:10px;padding:10px}
@@ -80,19 +80,20 @@ button{font-size:13px;font-weight:700;height:28px;padding:0 8px;border-radius:7p
 <script>
 var API='https://script.google.com/macros/s/AKfycbywQvfNKWqSi5ZpAnwFmTw00T40NidyTA86j6p6bF6QxrR6rMJ1UJ5XWUte7TCQSWwR/exec';
 var TIMES={'早上':'07:30–07:40','中午':'12:15–12:30','下午':'14:50–15:05'};
-var R={in:[['11','內掃負責人：排掃具'],['21','講台、黑板'],['27','講台、黑板'],['03','左掃地'],['04','右掃地'],['31','左拖地'],['34','右拖地'],['05','左窗'],['10','左窗'],['13','左窗'],['24','右窗'],['26','右窗'],['38','導師桌與地板掃拖'],['25','陽台掃拖與洗手台'],['36','垃圾與回收整理'],['32','午餐整理','中午']],
-fe:[['08','女廁負責人：排掃具'],['12','女廁垃圾整理'],['09','女便盆刷洗'],['02','洗手台刷洗與擦乾'],['06','地板（含便盆周圍地板）'],['07','地板（含便盆周圍地板）'],['01','廁所前、司令台、升旗台地板']],
-ma:[['29','男廁負責人：排掃具'],['35','男廁垃圾整理'],['28','小便斗刷洗'],['22','洗手台刷洗與擦乾'],['23','地板（含便盆周圍及身心障礙廁所地板）'],['33','地板（含便盆周圍及身心障礙廁所地板）'],['30','男便盆、身心障礙馬桶刷洗']]};
+var R={in:[['11','內掃負責人：排掃具','none'],['21','講台、黑板'],['27','講台、黑板'],['03','左掃地'],['04','右掃地'],['31','左拖地'],['34','右拖地'],['05','左窗'],['10','左窗'],['13','左窗'],['24','右窗'],['26','右窗'],['38','導師桌與地板掃拖'],['25','陽台掃拖與洗手台'],['36','垃圾與回收整理'],['32','午餐整理','中午']],
+fe:[['08','女廁負責人：排掃具','none'],['12','女廁垃圾整理'],['09','女便盆刷洗'],['02','洗手台刷洗與擦乾'],['06','地板（含便盆周圍地板）'],['07','地板（含便盆周圍地板）'],['01','廁所前、司令台、升旗台地板']],
+ma:[['29','男廁負責人：排掃具','none'],['35','男廁垃圾整理'],['28','小便斗刷洗'],['22','洗手台刷洗與擦乾'],['23','地板（含便盆周圍及身心障礙廁所地板）'],['33','地板（含便盆周圍及身心障礙廁所地板）'],['30','男便盆、身心障礙馬桶刷洗']]};
 function $(id){return document.getElementById(id)}
 function sessFor(h){return h<11?'早上':(h<14?'中午':'下午')}
 function tpeNow(){var d=new Date(Date.now()+8*3600e3);return {date:d.toISOString().slice(0,10),h:d.getUTCHours()}}
 function shift(ds,n){var d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
 function color(s){s.className=s.value==='打掃完成'?'ok':(s.value==='打掃未通過'?'ng':'')}
 function active(s){return !s.dataset.only||s.dataset.only===$('sess').value}
-function syncRows(){var se=$('sess').value;document.querySelectorAll('.row[data-only]').forEach(function(row){var show=row.dataset.only===se;row.style.display=show?'':'none';if(!show){var s=row.querySelector('select');s.value='';color(s);}})}
+function syncRows(){var se=$('sess').value;document.querySelectorAll('select[data-only]').forEach(function(s){var show=s.dataset.only===se;s.style.display=show?'':'none';var t=s.nextElementSibling;if(t)t.style.display=show?'none':'';if(!show){s.value='';color(s);}})}
 function build(){Object.keys(R).forEach(function(k){var box=$('l_'+k);R[k].forEach(function(r){
- var d=document.createElement('div');d.className='row';if(r[2])d.dataset.only=r[2];
- d.innerHTML='<span class="seat">'+r[0]+'</span><span class="job" title="'+r[1]+'">'+r[1]+'</span><select data-seat="'+r[0]+'" data-g="'+k+'"'+(r[2]?' data-only="'+r[2]+'"':'')+'><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select>';
+ var d=document.createElement('div');d.className='row';
+ var ctrl=r[2]==='none'?'':('<select data-seat="'+r[0]+'" data-g="'+k+'"'+(r[2]?' data-only="'+r[2]+'"':'')+'><option value="">請選擇</option><option>打掃完成</option><option>打掃未通過</option></select>'+(r[2]?'<span class="tag">僅'+r[2]+'</span>':''));
+ d.innerHTML='<span class="seat">'+r[0]+'</span><span class="job" title="'+r[1]+'">'+r[1]+'</span>'+ctrl;
  box.appendChild(d);});});
  document.querySelectorAll('select[data-seat]').forEach(function(s){s.onchange=function(){color(s);count();dirty=true}});
  document.querySelectorAll('select[data-all]').forEach(function(a){a.onchange=function(){if(!a.value)return;
