@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>2000 單字小卷｜防作弊互動拼字測驗</title>
-<!-- v10 ranges: P.3-10 ⑤ + P.11-15 ③ + P.16-20 ④ -->
+<!-- v11 ranges: P.3-10 ⑤ + P.11-15 ③ + P.16-20 ④ + 全範圍亂數 20/30/40 -->
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -120,8 +120,13 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 .busy{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.45rem .9rem;border-radius:999px;font-size:.8rem;z-index:60}
 
 
-.rtabs{display:flex;flex-wrap:wrap;gap:.4rem;max-width:42rem;margin:0 auto;padding:0 1rem .55rem}
+.rtabs{display:flex;flex-wrap:wrap;gap:.4rem;max-width:42rem;margin:0 auto;padding:0 1rem .35rem}
 .rtab{flex:1 1 calc(33.33% - .4rem);min-width:0;padding:.5rem .3rem;border-radius:.8rem;background:#f1f5f9;color:#475569;font-size:.8rem;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.randbar{display:flex;align-items:center;gap:.35rem;max-width:42rem;margin:0 auto;padding:0 1rem .55rem;flex-wrap:wrap}
+.randlab{font-size:.72rem;font-weight:800;color:#9a3412;flex:none;white-space:nowrap}
+.rtab.rand{flex:1 1 4rem;background:#fff7ed;color:#9a3412}
+.rtab.rand.on{background:#ea580c;color:#fff;box-shadow:0 4px 12px -4px rgba(234,88,12,.55)}
+.wgroup{font-size:.75rem;font-weight:800;color:#4338ca;background:#eef2ff;border-radius:.6rem;padding:.35rem .6rem;margin:.7rem 0 .35rem}
 .rtab.on{background:#4f46e5;color:#fff;box-shadow:0 4px 12px -4px rgba(79,70,229,.55)}
 .rtab:disabled{opacity:.55}
 </style>
@@ -146,6 +151,12 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
     <button type="button" class="rtab" data-range="5" id="tabRange5" onclick="selectRange('5')">P.3–10 ⑤</button>
     <button type="button" class="rtab" data-range="3" id="tabRange3" onclick="selectRange('3')">P.11–15 ③</button>
     <button type="button" class="rtab on" data-range="4" id="tabRange4" onclick="selectRange('4')">P.16–20 ④</button>
+  </div>
+  <div id="randTabs" class="randbar" role="tablist" aria-label="全範圍亂數出題">
+    <span class="randlab">全範圍亂數</span>
+    <button type="button" class="rtab rand" data-range="all20" id="tabAll20" onclick="selectRange('all20')">20題</button>
+    <button type="button" class="rtab rand" data-range="all30" id="tabAll30" onclick="selectRange('all30')">30題</button>
+    <button type="button" class="rtab rand" data-range="all40" id="tabAll40" onclick="selectRange('all40')">40題</button>
   </div>
 </header>
 
@@ -488,11 +499,26 @@ function setupStrictAntiPasteInput(el) {
 
 // ===== 流程 =====
 
-function rangeList() { return (BOOT.ranges && BOOT.ranges.length) ? BOOT.ranges : [
-  { id: '5', label: 'P.3–10 ⑤', title: '2000 單字小卷 (二段 P.3–10)', total: 20, perScore: 5, bonus: 0 },
-  { id: '3', label: 'P.11–15 ③', title: '2000 單字小卷 (二段 P.11–15)', total: 19, perScore: 5, bonus: 5 },
-  { id: '4', label: 'P.16–20 ④', title: '2000 單字小卷 (二段 P.16–20)', total: 20, perScore: 5, bonus: 0 }
-]; }
+function rangeList() {
+  var units = (BOOT.ranges && BOOT.ranges.length) ? BOOT.ranges : [
+    { id: '5', label: 'P.3–10 ⑤', title: '2000 單字小卷 (二段 P.3–10)', total: 20, perScore: 5, bonus: 0 },
+    { id: '3', label: 'P.11–15 ③', title: '2000 單字小卷 (二段 P.11–15)', total: 19, perScore: 5, bonus: 5 },
+    { id: '4', label: 'P.16–20 ④', title: '2000 單字小卷 (二段 P.16–20)', total: 20, perScore: 5, bonus: 0 }
+  ];
+  var rands = (BOOT.randomRanges && BOOT.randomRanges.length) ? BOOT.randomRanges : [
+    { id: 'all20', label: '全範圍亂數20', title: '2000 單字小卷（全範圍亂數 20 題）', total: 20, perScore: 5, bonus: 0, random: true },
+    { id: 'all30', label: '全範圍亂數30', title: '2000 單字小卷（全範圍亂數 30 題）', total: 30, perScore: 100/30, bonus: 0, random: true },
+    { id: 'all40', label: '全範圍亂數40', title: '2000 單字小卷（全範圍亂數 40 題）', total: 40, perScore: 2.5, bonus: 0, random: true }
+  ];
+  return units.concat(rands);
+}
+function isRandomRange(id) { return /^all(20|30|40)$/.test(String(id || '')); }
+function scoreNow(right, total) {
+  total = total || ((typeof activeQuestions !== 'undefined' && activeQuestions && activeQuestions.length) ? activeQuestions.length : (currentRange().total || 20));
+  var r = currentRange();
+  if (r.random || isRandomRange(selectedRange)) return Math.round(right * 100 / Math.max(1, total));
+  return (r.bonus == null ? BONUS : r.bonus) + right * (r.perScore || PER || 5);
+}
 function currentRange() {
   var id = selectedRange || BOOT.defaultRange || '4', list = rangeList();
   for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return list[i];
@@ -505,26 +531,30 @@ function applyRangeUI() {
   if ($('startTitle')) $('startTitle').textContent = r.title || ('2000 單字小卷 (' + r.label + ')');
   if ($('startTotal')) $('startTotal').textContent = r.total;
   if ($('startSub')) {
-    $('startSub').innerHTML = BONUS > 0
-      ? ('共 <span id="startTotal">' + r.total + '</span> 題拼字測驗 ＋ 第 20 題送分 ' + BONUS + ' 分（滿分 100 分）')
-      : ('共 <span id="startTotal">' + r.total + '</span> 題拼字測驗（每題 5 分，滿分 100 分）');
+    if (r.random || isRandomRange(r.id)) {
+      $('startSub').innerHTML = '從三個範圍共 60 題中隨機抽出 <span id="startTotal">' + r.total + '</span> 題（百分制，每題 100/' + r.total + ' 分，滿分 100 分，70 分及格）';
+    } else if (BONUS > 0) {
+      $('startSub').innerHTML = '共 <span id="startTotal">' + r.total + '</span> 題拼字測驗 ＋ 第 20 題送分 ' + BONUS + ' 分（滿分 100 分）';
+    } else {
+      $('startSub').innerHTML = '共 <span id="startTotal">' + r.total + '</span> 題拼字測驗（每題 5 分，滿分 100 分）';
+    }
   }
   if ($('headerSub')) {
-    $('headerSub').textContent = BONUS > 0
-      ? ('每題 ' + PER + ' 分・第 20 題送分 (+' + BONUS + ')')
-      : ('每題 ' + PER + ' 分・' + r.total + ' 題滿分 100 分');
+    if (r.random || isRandomRange(r.id)) $('headerSub').textContent = '全範圍亂數 ' + r.total + ' 題・百分制・70 分及格';
+    else if (BONUS > 0) $('headerSub').textContent = '每題 ' + PER + ' 分・第 20 題送分 (+' + BONUS + ')';
+    else $('headerSub').textContent = '每題 ' + PER + ' 分・' + r.total + ' 題滿分 100 分';
   }
-  if ($('wordListTitle')) $('wordListTitle').textContent = '全部單字複習總表 (' + r.label + ')';
+  if ($('wordListTitle')) $('wordListTitle').textContent = (r.random || isRandomRange(r.id)) ? '全部單字複習總表（全範圍）' : ('全部單字複習總表 (' + r.label + ')');
   document.querySelectorAll('.rtab').forEach(function (b) {
     b.classList.toggle('on', String(b.getAttribute('data-range')) === String(r.id));
   });
   if ($('scoreLabelHint') && !isQuizActive) {
-    if (BONUS > 0) { $('scoreLabelHint').textContent = '目前得分 (含送分 ' + BONUS + ')'; if ($('scoreDisplay')) $('scoreDisplay').textContent = BONUS + ' 分'; }
+    if (!(r.random || isRandomRange(r.id)) && BONUS > 0) { $('scoreLabelHint').textContent = '目前得分 (含送分 ' + BONUS + ')'; if ($('scoreDisplay')) $('scoreDisplay').textContent = BONUS + ' 分'; }
     else { $('scoreLabelHint').textContent = '目前得分'; if ($('scoreDisplay')) $('scoreDisplay').textContent = '0 分'; }
   }
 }
 function setRangeTabsVisible(v) {
-  var bar = $('rangeTabs'); if (bar) bar.classList.toggle('hidden', !v);
+  ['rangeTabs', 'randTabs'].forEach(function (id) { var bar = $(id); if (bar) bar.classList.toggle('hidden', !v); });
 }
 function selectRange(id) {
   if (isQuizActive) return;
@@ -547,6 +577,7 @@ function initQuiz() {
   if (BOOT.ranges && BOOT.ranges.length) {
     var seen = {};
     BOOT.ranges.forEach(function (r) { seen[r.id] = true; });
+    (BOOT.randomRanges || []).forEach(function (r) { seen[r.id] = true; });
     document.querySelectorAll('.rtab').forEach(function (b) {
       if (!seen[b.getAttribute('data-range')]) b.classList.add('hidden');
     });
@@ -617,7 +648,7 @@ function updateScoreAndProgress() {
   $('currentQNum').textContent = currentIndex + 1; $('totalQNum').textContent = total;
   $('progressBar').style.width = Math.max(5, Math.round(resolvedCount / total * 100)) + '%';
   if (isWrongOnlyMode) { $('scoreLabelHint').textContent = '錯題複習進度'; $('scoreDisplay').textContent = firstTryRight + ' / ' + total + ' 題'; }
-  else { $('scoreLabelHint').textContent = BONUS > 0 ? ('目前得分 (含送分 ' + BONUS + ')') : '目前得分'; $('scoreDisplay').textContent = (BONUS + firstTryRight * PER) + ' 分'; }
+  else { $('scoreLabelHint').textContent = (!(currentRange().random || isRandomRange(selectedRange)) && BONUS > 0) ? ('目前得分 (含送分 ' + BONUS + ')') : '目前得分'; $('scoreDisplay').textContent = scoreNow(firstTryRight, total) + ' 分'; }
 }
 function loadQuestion(i) {
   clearAutoAdvanceTimer();
@@ -768,6 +799,7 @@ function renderResult(r) {
     var lab = r.label || currentRange().label;
     $('summarySubtitle').textContent = '已完成 2000 單字小卷（' + lab + '，第 1–' + r.total + ' 題）';
     if ((r.bonus != null ? r.bonus : BONUS) > 0) { $('bonusNote').textContent = '✨ 已包含第 20 題送分 +' + (r.bonus != null ? r.bonus : BONUS) + ' 分'; $('bonusNote').style.display = ''; }
+    else if (r.random || isRandomRange(r.range || selectedRange)) { $('bonusNote').textContent = lab + '：百分制，每題 100/' + r.total + ' 分，滿分 100 分（無送分）'; $('bonusNote').style.display = ''; }
     else { $('bonusNote').textContent = lab + '：每題 5 分，滿分 100 分（無送分）'; $('bonusNote').style.display = ''; }
   }
   var fb = $('flagBanner');
@@ -810,12 +842,18 @@ function restartFullQuiz() { clearAutoAdvanceTimer(); beginSession('full', null)
 // ===== 單字總表（只在作答前／結算後可看）=====
 function renderWordList(list) {
   window._wl = list;
-  $('wordListContainer').innerHTML = list.map(function (q, i) {
-    return '<div class="witem"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><div><span class="wnum">' + q.id + '</span><b style="font-size:1.1rem">' + esc(q.word) + '</b><span class="ipa wlipa">KK ' + esc(q.ipa) + '</span><span class="pos">' + esc(q.pos) + '</span></div>' +
+  var html = '', lastGroup = null;
+  list.forEach(function (q, i) {
+    var g = q.srcLabel || '';
+    if (g && g !== lastGroup) { html += '<div class="wgroup">' + esc(g) + '</div>'; lastGroup = g; }
+    var num = (q.srcId != null ? q.srcId : q.id);
+    html += '<div class="witem"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><div><span class="wnum">' + esc(String(num)) + '</span><b style="font-size:1.1rem">' + esc(q.word) + '</b><span class="ipa wlipa">KK ' + esc(q.ipa) + '</span><span class="pos">' + esc(q.pos) + '</span></div>' +
       '<button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].word)">🔊 單字</button></div>' +
       '<div style="font-weight:800;color:#312e81;font-size:.88rem;margin:.2rem 0 0 1.8rem">' + esc(q.zh) + '</div>' +
       '<div class="sen" style="margin-left:1.8rem;font-size:.8rem"><div><p style="font-weight:600;color:#334155">' + esc(q.exEn) + '</p><p class="senzh" style="margin:0">' + esc(q.exZh) + '</p></div><button class="sbtn" type="button" onclick="speakText(window._wl[' + i + '].exEn,Math.max(0.8,speechRate))">🔊</button></div></div>';
-  }).join('') + (BONUS > 0 ? '<div class="witem okbanner" style="margin-top:.6rem"><span class="wnum" style="background:#059669;color:#fff">20</span>送分題（自動計入 +' + BONUS + ' 分）・滿分 100 分</div>' : '');
+  });
+  if (BONUS > 0 && !isRandomRange(selectedRange)) html += '<div class="witem okbanner" style="margin-top:.6rem"><span class="wnum" style="background:#059669;color:#fff">20</span>送分題（自動計入 +' + BONUS + ' 分）・滿分 100 分</div>';
+  $('wordListContainer').innerHTML = html;
 }
 function openWordListModal() {
   if (isQuizActive) return;
