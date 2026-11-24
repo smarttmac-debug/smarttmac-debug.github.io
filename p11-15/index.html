@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>2000 單字小卷｜防作弊互動拼字測驗</title>
-<!-- v9 ranges: P.11-15 ③ + P.16-20 ④ -->
+<!-- v10 ranges: P.3-10 ⑤ + P.11-15 ③ + P.16-20 ④ -->
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -119,8 +119,9 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
 .stats5{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-top:1rem}@media(min-width:520px){.stats5{grid-template-columns:repeat(4,1fr)}}
 .busy{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.45rem .9rem;border-radius:999px;font-size:.8rem;z-index:60}
 
-.rtabs{display:flex;gap:.4rem;max-width:42rem;margin:0 auto;padding:0 1rem .55rem}
-.rtab{flex:1;padding:.55rem .4rem;border-radius:.8rem;background:#f1f5f9;color:#475569;font-size:.85rem;font-weight:800}
+
+.rtabs{display:flex;flex-wrap:wrap;gap:.4rem;max-width:42rem;margin:0 auto;padding:0 1rem .55rem}
+.rtab{flex:1 1 calc(33.33% - .4rem);min-width:0;padding:.5rem .3rem;border-radius:.8rem;background:#f1f5f9;color:#475569;font-size:.8rem;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rtab.on{background:#4f46e5;color:#fff;box-shadow:0 4px 12px -4px rgba(79,70,229,.55)}
 .rtab:disabled{opacity:.55}
 </style>
@@ -142,6 +143,7 @@ footer{text-align:center;font-size:.72rem;color:#94a3b8;padding:1rem}
   </div>
   <div class="prog"><div id="progressBar"></div></div>
   <div id="rangeTabs" class="rtabs" role="tablist" aria-label="單元範圍">
+    <button type="button" class="rtab" data-range="5" id="tabRange5" onclick="selectRange('5')">P.3–10 ⑤</button>
     <button type="button" class="rtab" data-range="3" id="tabRange3" onclick="selectRange('3')">P.11–15 ③</button>
     <button type="button" class="rtab on" data-range="4" id="tabRange4" onclick="selectRange('4')">P.16–20 ④</button>
   </div>
@@ -487,6 +489,7 @@ function setupStrictAntiPasteInput(el) {
 // ===== 流程 =====
 
 function rangeList() { return (BOOT.ranges && BOOT.ranges.length) ? BOOT.ranges : [
+  { id: '5', label: 'P.3–10 ⑤', title: '2000 單字小卷 (二段 P.3–10)', total: 20, perScore: 5, bonus: 0 },
   { id: '3', label: 'P.11–15 ③', title: '2000 單字小卷 (二段 P.11–15)', total: 19, perScore: 5, bonus: 5 },
   { id: '4', label: 'P.16–20 ④', title: '2000 單字小卷 (二段 P.16–20)', total: 20, perScore: 5, bonus: 0 }
 ]; }
